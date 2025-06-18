@@ -217,7 +217,7 @@ class PermisosController extends ActiveRecord
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
-                'mensaje' => 'Clave del permiso debe de tener mas de 1 caracteres'
+                'mensaje' => 'Clave del permiso debe de tener mas de 1 caracteres' 
             ]);
             return;
         }

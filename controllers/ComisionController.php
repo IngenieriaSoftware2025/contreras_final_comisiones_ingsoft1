@@ -12,7 +12,7 @@ class ComisionController extends ActiveRecord
 
     public static function renderizarPagina(Router $router)
     {
-        $router->render('comision/index', []);
+        $router->render('comisiones/index', []);
     }
 
     public static function guardarAPI()

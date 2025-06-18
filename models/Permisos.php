@@ -49,7 +49,7 @@ class Permisos extends ActiveRecord {
         $this->permiso_situacion = $permiso['permiso_situacion'] ?? 1;
     }
 
-    public static function EliminarPermiso($id){
+    public static function eliminarPermiso($id){
         $sql = "UPDATE macs_permiso SET permiso_situacion = 0 WHERE permiso_id = $id";
         return self::SQL($sql);
     }

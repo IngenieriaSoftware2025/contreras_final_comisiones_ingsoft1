@@ -389,26 +389,25 @@ class UsuariosController extends ActiveRecord
                 return;
             }
 
-            $data = Usuarios::find($id);
-            $usuarioObj = new Usuarios($data);
-            $usuarioObj->sincronizar([
-                'usuario_nom1' => $_POST['usuario_nom1'],
-                'usuario_nom2' => $_POST['usuario_nom2'],
-                'usuario_ape1' => $_POST['usuario_ape1'],
-                'usuario_ape2' => $_POST['usuario_ape2'],
-                'usuario_tel' => $_POST['usuario_tel'],
-                'usuario_direc' => $_POST['usuario_direc'],
-                'usuario_dpi' => $_POST['usuario_dpi'],
-                'usuario_correo' => $_POST['usuario_correo'],
-                'usuario_situacion' => 1
-            ]);
-            $usuarioObj->actualizar();
+            $sql = "UPDATE macs_usuario SET 
+                    usuario_nom1 = '{$_POST['usuario_nom1']}',
+                    usuario_nom2 = '{$_POST['usuario_nom2']}',
+                    usuario_ape1 = '{$_POST['usuario_ape1']}',
+                    usuario_ape2 = '{$_POST['usuario_ape2']}',
+                    usuario_tel = '{$_POST['usuario_tel']}',
+                    usuario_direc = '{$_POST['usuario_direc']}',
+                    usuario_dpi = '{$_POST['usuario_dpi']}',
+                    usuario_correo = '{$_POST['usuario_correo']}'
+                    WHERE usuario_id = {$id}";
+            
+            $resultado = self::SQL($sql);
 
             http_response_code(200);
             echo json_encode([
                 'codigo' => 1,
                 'mensaje' => 'La informacion del usuario ha sido modificada exitosamente'
             ]);
+            
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode([
