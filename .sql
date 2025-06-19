@@ -101,3 +101,8 @@ historial_fecha_creacion DATETIME YEAR TO SECOND DEFAULT CURRENT YEAR TO SECOND,
 historial_situacion SMALLINT DEFAULT 1,
 FOREIGN KEY (historial_usuario_id) REFERENCES macs_usuario(usuario_id)
 );
+
+
+
+INSERT INTO macs_usuario (usuario_id,usuario_nom1,usuario_nom2,usuario_ape1,usuario_ape2,usuario_tel,usuario_direc,usuario_dpi,usuario_correo,usuario_contra,usuario_token,usuario_fecha_creacion,usuario_fecha_contra,usuario_fotografia,usuario_situacion) VALUES(8,'Martin','Alexander','Contreras','Samayoa',49219554,'Zona 5 Guatemala','3005134880101','martin@gmail.com','$2y$10$b/gVGr0IwuRtBmPgHBQKJOEnVcVaIT3NFdAvPc07yBT1ucmFCE2Ri','685365bd00b9d',null,null,'storage/fotosUsuarios/3005134880101.jpg',1)
+GO
