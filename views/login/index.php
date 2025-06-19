@@ -21,9 +21,12 @@
                   <label class="form-label" for="usuario_contra">Contraseña</label>
                 </div>
 
+                <h5>usuario 3005134880101</h5>
+                <h5>contraseña martin2565</h5>
+
                 <p class="small mb-5 pb-lg-2"><a class="text-white-50" href="#!">¿Olvidaste tu contraseña?</a></p>
 
-                <button type="submit" id="BtnIniciar" class="btn btn-danger btn-lg px-5">Iniciar Sesión</button>
+                <button type="submit" id="BtnIniciar" class="btn btn-outline-light btn-lg px-5">Iniciar Sesión</button>
 
                 <div class="d-flex justify-content-center text-center mt-4 pt-1">
                   <a href="#!" class="text-white"><i class="fab fa-facebook-f fa-lg"></i></a>

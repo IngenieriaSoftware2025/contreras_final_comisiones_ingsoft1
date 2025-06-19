@@ -10,11 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const BtnModificar = document.getElementById('BtnModificar');
     const BtnLimpiar = document.getElementById('BtnLimpiar');
     const BtnBuscarAsignaciones = document.getElementById('BtnBuscarAsignaciones');
-    const BtnPersonalDisponible = document.getElementById('BtnPersonalDisponible');
     const SelectComision = document.getElementById('comision_id');
     const SelectUsuario = document.getElementById('usuario_id');
     const seccionTabla = document.getElementById('seccionTabla');
-    const seccionPersonalDisponible = document.getElementById('seccionPersonalDisponible');
 
     const cargarComisiones = async () => {
         const url = `/contreras_final_comisiones_ingsoft1/comisionpersonal/buscarComisionesAPI`;
@@ -71,37 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     option.textContent = `${usuario.usuario_nom1} ${usuario.usuario_ape1}`;
                     SelectUsuario.appendChild(option);
                 });
-            } else {
-                await Swal.fire({
-                    position: "center",
-                    icon: "info",
-                    title: "Error",
-                    text: mensaje,
-                    showConfirmButton: true,
-                });
-            }
-
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    const cargarUsuariosDisponibles = async () => {
-        const url = `/contreras_final_comisiones_ingsoft1/comisionpersonal/buscarUsuariosDisponiblesAPI`;
-        const config = {
-            method: 'GET'
-        }
-
-        try {
-            const respuesta = await fetch(url, config);
-            const datos = await respuesta.json();
-            const { codigo, mensaje, data } = datos;
-
-            if (codigo == 1) {
-                if (datatablePersonalDisponible) {
-                    datatablePersonalDisponible.clear().draw();
-                    datatablePersonalDisponible.rows.add(data).draw();
-                }
             } else {
                 await Swal.fire({
                     position: "center",
@@ -208,20 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const MostrarTabla = () => {
         if (seccionTabla.style.display === 'none') {
             seccionTabla.style.display = 'block';
-            seccionPersonalDisponible.style.display = 'none';
             BuscarAsignaciones();
         } else {
             seccionTabla.style.display = 'none';
-        }
-    }
-
-    const MostrarPersonalDisponible = () => {
-        if (seccionPersonalDisponible.style.display === 'none') {
-            seccionPersonalDisponible.style.display = 'block';
-            seccionTabla.style.display = 'none';
-            cargarUsuariosDisponibles();
-        } else {
-            seccionPersonalDisponible.style.display = 'none';
         }
     }
 
@@ -342,57 +298,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="bi bi-trash3 me-1"></i>Eliminar
                          </button>
                      </div>`;
-                }
-            }
-        ]
-    });
-
-    const datatablePersonalDisponible = new DataTable('#TablePersonalDisponible', {
-        dom: `
-            <"row mt-3 justify-content-between" 
-                <"col" l> 
-                <"col" B> 
-                <"col-3" f>
-            >
-            t
-            <"row mt-3 justify-content-between" 
-                <"col-md-3 d-flex align-items-center" i> 
-                <"col-md-8 d-flex justify-content-end" p>
-            >
-        `,
-        language: lenguaje,
-        data: [],
-        columns: [
-            {
-                title: 'No.',
-                data: 'usuario_id',
-                width: '10%',
-                render: (data, type, row, meta) => meta.row + 1
-            },
-            { 
-                title: 'Nombre Completo', 
-                data: 'usuario_nom1',
-                width: '40%',
-                render: (data, type, row) => {
-                    return `${row.usuario_nom1} ${row.usuario_ape1}`;
-                }
-            },
-            { 
-                title: 'Correo', 
-                data: 'usuario_correo',
-                width: '25%'
-            },
-            { 
-                title: 'Teléfono', 
-                data: 'usuario_tel',
-                width: '15%'
-            },
-            {
-                title: 'Estado',
-                data: 'usuario_situacion',
-                width: '10%',
-                render: (data, type, row) => {
-                    return '<span class="badge bg-success">DISPONIBLE</span>';
                 }
             }
         ]
@@ -538,5 +443,4 @@ document.addEventListener('DOMContentLoaded', function() {
     BtnLimpiar.addEventListener('click', limpiarTodo);
     BtnModificar.addEventListener('click', ModificarAsignacion);
     BtnBuscarAsignaciones.addEventListener('click', MostrarTabla);
-    BtnPersonalDisponible.addEventListener('click', MostrarPersonalDisponible);
 });

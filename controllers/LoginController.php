@@ -21,24 +21,25 @@ class LoginController extends ActiveRecord
             $dpi = htmlspecialchars($_POST['usuario_dpi']);
             $contrasena = htmlspecialchars($_POST['usuario_contra']);
 
-            $queryExisteUser = "SELECT usuario_id, usuario_nom1, usuario_ape1, usuario_contra FROM macs_usuario WHERE usuario_dpi = '$dpi' AND usuario_situacion = 1";
+            $queryExisteUser = "SELECT usuario_id, usuario_nom1, usuario_nom2, usuario_ape1, usuario_ape2, usuario_contra FROM macs_usuario WHERE usuario_dpi = '$dpi' AND usuario_situacion = 1";
 
-            $existeUsuario = ActiveRecord::fetchArray($queryExisteUser);
+            $existeUsuario = ActiveRecord::fetchArray($queryExisteUser)[0];
 
-            if ($existeUsuario && count($existeUsuario) > 0) {
-                $usuario = $existeUsuario[0];
-                $passDB = $usuario['usuario_contra'];
+            if ($existeUsuario) {
+                $passDB = $existeUsuario['usuario_contra'];
 
-                if ($contrasena === $passDB) {
+                if (password_verify($contrasena, $passDB)) {
                     session_start();
 
-                    $nombreCompleto = $usuario['usuario_nom1'] . ' ' . $usuario['usuario_ape1'];
-                    $usuarioId = $usuario['usuario_id'];
+                    $nombreCompleto = $existeUsuario['usuario_nom1'] . ' ' . $existeUsuario['usuario_nom2'] . ' ' . $existeUsuario['usuario_ape1'] . ' ' . $existeUsuario['usuario_ape2'];
+                    $partesNombre = explode(' ', $nombreCompleto);
+                    $nombreUser = $partesNombre[0] . ' ' . ($partesNombre[2] ?? '');
+                    $usuarioId = $existeUsuario['usuario_id'];
                     
-                    $_SESSION['user'] = $nombreCompleto;
+                    $_SESSION['user'] = $nombreUser;
                     $_SESSION['dpi'] = $dpi;
                     $_SESSION['usuario_id'] = $usuarioId;
-                    $_SESSION['usuario_rol'] = 'ADMIN';
+                    $_SESSION['rol'] = 'USUARIO';
 
                     echo json_encode([
                         'codigo' => 1,
@@ -69,7 +70,7 @@ class LoginController extends ActiveRecord
     {
         session_start();
         
-        if (!isset($_SESSION['user']) || !isset($_SESSION['usuario_rol'])) {
+        if (!isset($_SESSION['user']) || !isset($_SESSION['rol'])) {
             header("Location: /contreras_final_comisiones_ingsoft1/");
             exit;
         }

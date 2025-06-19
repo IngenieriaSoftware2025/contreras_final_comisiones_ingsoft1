@@ -124,16 +124,22 @@ class ComisionController extends ActiveRecord
                 exit;
             }
             
+            // Formatear fechas para Informix
+            $fecha_inicio = date('Y-m-d', strtotime($_POST['comision_fecha_inicio']));
+            
             if ($_POST['comision_duracion_tipo'] == 'HORAS') {
-                $fecha_fin = date('Y-m-d H:i:s', strtotime($_POST['comision_fecha_inicio'] . ' +' . $_POST['comision_duracion'] . ' hours'));
+                $fecha_fin = date('Y-m-d', strtotime($fecha_inicio . ' +' . $_POST['comision_duracion'] . ' hours'));
             } else {
-                $fecha_fin = date('Y-m-d', strtotime($_POST['comision_fecha_inicio'] . ' +' . $_POST['comision_duracion'] . ' days'));
+                $fecha_fin = date('Y-m-d', strtotime($fecha_inicio . ' +' . $_POST['comision_duracion'] . ' days'));
             }
             
+            $_POST['comision_fecha_inicio'] = $fecha_inicio;
             $_POST['comision_fecha_fin'] = $fecha_fin;
             $_POST['comision_estado'] = 'PROGRAMADA';
-            $_POST['comision_fecha_creacion'] = '';
             $_POST['comision_situacion'] = 1;
+            
+            // No establecer fecha_creacion, dejar que la base de datos use el DEFAULT
+            unset($_POST['comision_fecha_creacion']);
             
             $comision = new Comision($_POST);
             $resultado = $comision->crear();
@@ -194,13 +200,26 @@ class ComisionController extends ActiveRecord
 
             $where = implode(" AND ", $condiciones);
             $sql = "SELECT 
-                        c.*,
+                        c.comision_id,
+                        c.comision_titulo,
+                        c.comision_descripcion,
+                        c.comision_tipo,
+                        c.comision_fecha_inicio,
+                        c.comision_duracion,
+                        c.comision_duracion_tipo,
+                        c.comision_fecha_fin,
+                        c.comision_ubicacion,
+                        c.comision_observaciones,
+                        c.comision_estado,
+                        c.comision_fecha_creacion,
+                        c.comision_usuario_creo,
+                        c.comision_situacion,
                         u.usuario_nom1,
                         u.usuario_ape1
                     FROM macs_comision c 
                     INNER JOIN macs_usuario u ON c.comision_usuario_creo = u.usuario_id
                     WHERE $where 
-                    ORDER BY c.comision_fecha_creacion DESC";
+                    ORDER BY c.comision_id DESC";
             $data = self::fetchArray($sql);
 
             http_response_code(200);
@@ -224,106 +243,109 @@ class ComisionController extends ActiveRecord
     {
         getHeadersApi();
 
-        $id = $_POST['comision_id'];
-        $_POST['comision_titulo'] = ucwords(strtolower(trim(htmlspecialchars($_POST['comision_titulo']))));
-
-        $cantidad_titulo = strlen($_POST['comision_titulo']);
-
-        if ($cantidad_titulo < 5) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Título debe de tener mas de 4 caracteres'
-            ]);
-            return;
-        }
-
-        if ($cantidad_titulo > 250) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Título no puede exceder los 250 caracteres'
-            ]);
-            return;
-        }
-
-        $_POST['comision_descripcion'] = ucwords(strtolower(trim(htmlspecialchars($_POST['comision_descripcion']))));
-
-        $cantidad_descripcion = strlen($_POST['comision_descripcion']);
-
-        if ($cantidad_descripcion < 10) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Descripción debe de tener mas de 9 caracteres'
-            ]);
-            return;
-        }
-
-        $_POST['comision_tipo'] = strtoupper(trim(htmlspecialchars($_POST['comision_tipo'])));
-
-        if (!in_array($_POST['comision_tipo'], ['TRANSMISIONES', 'INFORMATICA'])) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Tipo de comisión debe ser TRANSMISIONES o INFORMATICA'
-            ]);
-            return;
-        }
-
-        $_POST['comision_fecha_inicio'] = trim(htmlspecialchars($_POST['comision_fecha_inicio']));
-
-        if (empty($_POST['comision_fecha_inicio'])) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Debe seleccionar una fecha de inicio'
-            ]);
-            return;
-        }
-
-        $_POST['comision_duracion'] = filter_var($_POST['comision_duracion'], FILTER_SANITIZE_NUMBER_INT);
-
-        if ($_POST['comision_duracion'] <= 0) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'La duración debe ser mayor a 0'
-            ]);
-            return;
-        }
-
-        $_POST['comision_duracion_tipo'] = strtoupper(trim(htmlspecialchars($_POST['comision_duracion_tipo'])));
-
-        if (!in_array($_POST['comision_duracion_tipo'], ['HORAS', 'DIAS'])) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Tipo de duración debe ser HORAS o DIAS'
-            ]);
-            return;
-        }
-
-        $_POST['comision_ubicacion'] = ucwords(strtolower(trim(htmlspecialchars($_POST['comision_ubicacion']))));
-
-        $cantidad_ubicacion = strlen($_POST['comision_ubicacion']);
-
-        if ($cantidad_ubicacion < 5) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Ubicación debe de tener mas de 4 caracteres'
-            ]);
-            return;
-        }
-
-        $_POST['comision_observaciones'] = trim(htmlspecialchars($_POST['comision_observaciones']));
-
         try {
+            $id = $_POST['comision_id'];
+            $_POST['comision_titulo'] = ucwords(strtolower(trim(htmlspecialchars($_POST['comision_titulo']))));
+
+            $cantidad_titulo = strlen($_POST['comision_titulo']);
+
+            if ($cantidad_titulo < 5) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Título debe de tener mas de 4 caracteres'
+                ]);
+                return;
+            }
+
+            if ($cantidad_titulo > 250) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Título no puede exceder los 250 caracteres'
+                ]);
+                return;
+            }
+
+            $_POST['comision_descripcion'] = ucwords(strtolower(trim(htmlspecialchars($_POST['comision_descripcion']))));
+
+            $cantidad_descripcion = strlen($_POST['comision_descripcion']);
+
+            if ($cantidad_descripcion < 10) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Descripción debe de tener mas de 9 caracteres'
+                ]);
+                return;
+            }
+
+            $_POST['comision_tipo'] = strtoupper(trim(htmlspecialchars($_POST['comision_tipo'])));
+
+            if (!in_array($_POST['comision_tipo'], ['TRANSMISIONES', 'INFORMATICA'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Tipo de comisión debe ser TRANSMISIONES o INFORMATICA'
+                ]);
+                return;
+            }
+
+            $_POST['comision_fecha_inicio'] = trim(htmlspecialchars($_POST['comision_fecha_inicio']));
+
+            if (empty($_POST['comision_fecha_inicio'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Debe seleccionar una fecha de inicio'
+                ]);
+                return;
+            }
+
+            $_POST['comision_duracion'] = filter_var($_POST['comision_duracion'], FILTER_SANITIZE_NUMBER_INT);
+
+            if ($_POST['comision_duracion'] <= 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'La duración debe ser mayor a 0'
+                ]);
+                return;
+            }
+
+            $_POST['comision_duracion_tipo'] = strtoupper(trim(htmlspecialchars($_POST['comision_duracion_tipo'])));
+
+            if (!in_array($_POST['comision_duracion_tipo'], ['HORAS', 'DIAS'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Tipo de duración debe ser HORAS o DIAS'
+                ]);
+                return;
+            }
+
+            $_POST['comision_ubicacion'] = ucwords(strtolower(trim(htmlspecialchars($_POST['comision_ubicacion']))));
+
+            $cantidad_ubicacion = strlen($_POST['comision_ubicacion']);
+
+            if ($cantidad_ubicacion < 5) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Ubicación debe de tener mas de 4 caracteres'
+                ]);
+                return;
+            }
+
+            $_POST['comision_observaciones'] = trim(htmlspecialchars($_POST['comision_observaciones']));
+
+            // Formatear fechas para Informix
+            $fecha_inicio = date('Y-m-d', strtotime($_POST['comision_fecha_inicio']));
+            
             if ($_POST['comision_duracion_tipo'] == 'HORAS') {
-                $fecha_fin = date('Y-m-d H:i:s', strtotime($_POST['comision_fecha_inicio'] . ' +' . $_POST['comision_duracion'] . ' hours'));
+                $fecha_fin = date('Y-m-d', strtotime($fecha_inicio . ' +' . $_POST['comision_duracion'] . ' hours'));
             } else {
-                $fecha_fin = date('Y-m-d', strtotime($_POST['comision_fecha_inicio'] . ' +' . $_POST['comision_duracion'] . ' days'));
+                $fecha_fin = date('Y-m-d', strtotime($fecha_inicio . ' +' . $_POST['comision_duracion'] . ' days'));
             }
 
             $data = Comision::find($id);
@@ -331,7 +353,7 @@ class ComisionController extends ActiveRecord
                 'comision_titulo' => $_POST['comision_titulo'],
                 'comision_descripcion' => $_POST['comision_descripcion'],
                 'comision_tipo' => $_POST['comision_tipo'],
-                'comision_fecha_inicio' => $_POST['comision_fecha_inicio'],
+                'comision_fecha_inicio' => $fecha_inicio,
                 'comision_duracion' => $_POST['comision_duracion'],
                 'comision_duracion_tipo' => $_POST['comision_duracion_tipo'],
                 'comision_fecha_fin' => $fecha_fin,

@@ -1,6 +1,3 @@
-<?php
-session_start();
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,7 +88,7 @@ session_start();
                     <div class="d-flex align-items-center me-3">
                         <span class="text-white me-3">
                             <i class="bi bi-person-circle me-1"></i>
-                            <?= $_SESSION['user'] ?> (<?= $_SESSION['usuario_rol'] ?>)
+                            <?= $_SESSION['user'] ?> (<?= $_SESSION['rol'] ?>)
                         </span>
                     </div>
                     <div class="col-lg-2 d-grid mb-lg-0 mb-2">

@@ -60,15 +60,6 @@
 </style>
 <body>
     <div class="header">
-        <?php 
-        session_start();
-        if(isset($_SESSION['user']) && isset($_SESSION['usuario_id'])) {
-            echo "<div style='background: rgba(255,255,255,0.2); padding: 10px; margin: 20px 0; text-align: center; border-radius: 10px; display: inline-block;'>";
-            echo "<strong>USUARIO EN SESIÓN:</strong> " . $_SESSION['user'] . "<br>";
-            echo "<strong>ID USUARIO:</strong> " . $_SESSION['usuario_id'];
-            echo "</div>";
-        }
-        ?>
     <div class="logo">¡Bienvenido al Sistema de Comisiones MACS!</div>
     </div>
     

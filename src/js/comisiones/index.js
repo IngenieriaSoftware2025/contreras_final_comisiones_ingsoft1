@@ -30,7 +30,7 @@ const guardarComision = async e => {
     document.getElementById('comision_usuario_creo').value = 1;
 
     const body = new FormData(formComision);
-    const url = "/contreras_final_comisiones_ingsoft1/comision/guardarAPI";
+    const url = "/contreras_final_comisiones_ingsoft1/comisiones/guardarAPI";
     const config = {
         method: 'POST',
         body
@@ -70,7 +70,7 @@ const guardarComision = async e => {
 }
 
 const BuscarComisiones = async () => {
-    const url = `/contreras_final_comisiones_ingsoft1/comision/buscarAPI`;
+    const url = `/contreras_final_comisiones_ingsoft1/comisiones/buscarAPI`;
     const config = {
         method: 'GET'
     }
@@ -223,12 +223,6 @@ const datatable = new DataTable('#TableComisiones', {
                          title="Modificar">
                          <i class='bi bi-pencil-square me-1'></i> Modificar
                      </button>
-                     <button class='btn btn-info estado mx-1' 
-                         data-id="${data}"
-                         data-estado="${row.comision_estado || ''}"
-                         title="Cambiar Estado">
-                         <i class='bi bi-arrow-repeat me-1'></i> Estado
-                     </button>
                      <button class='btn btn-danger eliminar mx-1' 
                          data-id="${data}"
                          title="Eliminar">
@@ -286,7 +280,7 @@ const ModificarComision = async (event) => {
     }
 
     const body = new FormData(formComision);
-    const url = '/contreras_final_comisiones_ingsoft1/comision/modificarAPI';
+    const url = '/contreras_final_comisiones_ingsoft1/comisiones/modificarAPI';
     const config = {
         method: 'POST',
         body
@@ -353,7 +347,7 @@ const CambiarEstadoComision = async (e) => {
         formData.append('comision_id', idComision);
         formData.append('comision_estado', nuevoEstado);
 
-        const url = '/contreras_final_comisiones_ingsoft1/comision/cambiarEstadoAPI';
+        const url = '/contreras_final_comisiones_ingsoft1/comisiones/cambiarEstadoAPI';
         const config = {
             method: 'POST',
             body: formData
@@ -406,7 +400,7 @@ const EliminarComisiones = async (e) => {
     });
 
     if (AlertaConfirmarEliminar.isConfirmed) {
-        const url = `/contreras_final_comisiones_ingsoft1/comision/EliminarAPI?id=${idComision}`;
+        const url = `/contreras_final_comisiones_ingsoft1/comisiones/eliminar?id=${idComision}`;
         const config = {
             method: 'GET'
         }
@@ -444,7 +438,6 @@ const EliminarComisiones = async (e) => {
 
 datatable.on('click', '.eliminar', EliminarComisiones);
 datatable.on('click', '.modificar', llenarFormulario);
-datatable.on('click', '.estado', CambiarEstadoComision);
 formComision.addEventListener('submit', guardarComision);
 
 BtnLimpiar.addEventListener('click', limpiarTodo);

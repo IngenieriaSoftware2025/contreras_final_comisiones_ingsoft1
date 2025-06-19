@@ -301,55 +301,6 @@ class AsignacionPermisosController extends ActiveRecord
         }
     }
 
-    public static function revocarAPI()
-    {
-        try {
-            $id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
-            
-            if($id <= 0) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'ID de asignación inválido'
-                ]);
-                return;
-            }
-            
-            $data = AsignacionPermisos::find($id);
-            
-            if(!$data) {
-                http_response_code(404);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Asignación no encontrada'
-                ]);
-                return;
-            }
-            
-            $fecha_actual = date('Y-m-d H:i:s');
-            
-            $data->sincronizar([
-                'asignacion_situacion' => 0,
-                'asignacion_quitar_fechaPermiso' => $fecha_actual
-            ]);
-            $data->actualizar();
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Permiso revocado correctamente'
-            ]);
-            
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al revocar el permiso',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
     public static function EliminarAPI()
     {
         try {

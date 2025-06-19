@@ -17,7 +17,7 @@ use Controllers\MapasController;
 $router = new Router();
 $router->setBaseURL('/contreras_final_comisiones_ingsoft1');
 
-// RUTA PRINCIPAL - Login/Dashboard
+//LOGIN
 $router->get('/', [LoginController::class,'renderizarPagina']);
 $router->get('/login', [LoginController::class,'renderizarPagina']);
 $router->get('/inicio', [AppController::class,'index']);
@@ -77,11 +77,6 @@ $router->get('/comisionpersonal/validarAsignacionAPI', [ComisionPersonalControll
 // ESTADÍSTICAS
 $router->get('/estadisticas', [EstadisticasController::class, 'renderizarPagina']);
 $router->get('/estadisticas/buscarComisionesPorTipoAPI', [EstadisticasController::class, 'buscarComisionesPorTipoAPI']);
-$router->get('/estadisticas/buscarComisionesPorEstadoAPI', [EstadisticasController::class, 'buscarComisionesPorEstadoAPI']);
-$router->get('/estadisticas/buscarPersonalMasActivoAPI', [EstadisticasController::class, 'buscarPersonalMasActivoAPI']);
-$router->get('/estadisticas/buscarComisionesPorDuracionAPI', [EstadisticasController::class, 'buscarComisionesPorDuracionAPI']);
-$router->get('/estadisticas/buscarComisionesMensualesAPI', [EstadisticasController::class, 'buscarComisionesMensualesAPI']);
-$router->get('/estadisticas/buscarUsuariosPorPermisosAPI', [EstadisticasController::class, 'buscarUsuariosPorPermisosAPI']);
 
 // MAPA
 $router->get('/mapa', [MapasController::class, 'renderizarPagina']);

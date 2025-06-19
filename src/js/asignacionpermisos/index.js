@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const SelectUsuarioAsigno = document.getElementById('asignacion_usuario_asigno');
     const FiltroUsuario = document.getElementById('filtroUsuario');
     const seccionTabla = document.getElementById('seccionTabla');
-    const seccionPermisosUsuario = document.getElementById('seccionPermisosUsuario');
 
     const cargarUsuarios = async () => {
         const url = `/contreras_final_comisiones_ingsoft1/asignacionpermisos/buscarUsuariosAPI`;
@@ -33,7 +32,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (codigo == 1) {
                 SelectUsuario.innerHTML = '<option value="">Seleccione un usuario</option>';
                 SelectUsuarioAsigno.innerHTML = '<option value="">Seleccione quién asigna</option>';
-                FiltroUsuario.innerHTML = '<option value="">Seleccione un usuario para ver sus permisos</option>';
+                
+                if (FiltroUsuario) {
+                    FiltroUsuario.innerHTML = '<option value="">Seleccione un usuario para ver sus permisos</option>';
+                }
                 
                 data.forEach(usuario => {
                     const option = document.createElement('option');
@@ -46,10 +48,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     option2.textContent = `${usuario.usuario_nom1} ${usuario.usuario_ape1}`;
                     SelectUsuarioAsigno.appendChild(option2);
 
-                    const option3 = document.createElement('option');
-                    option3.value = usuario.usuario_id;
-                    option3.textContent = `${usuario.usuario_nom1} ${usuario.usuario_ape1}`;
-                    FiltroUsuario.appendChild(option3);
+                    if (FiltroUsuario) {
+                        const option3 = document.createElement('option');
+                        option3.value = usuario.usuario_id;
+                        option3.textContent = `${usuario.usuario_nom1} ${usuario.usuario_ape1}`;
+                        FiltroUsuario.appendChild(option3);
+                    }
                 });
             } else {
                 await Swal.fire({
@@ -247,22 +251,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    const MostrarTabla = () => {
-        if (seccionTabla.style.display === 'none') {
-            seccionTabla.style.display = 'block';
-            seccionPermisosUsuario.style.display = 'none';
-            BuscarAsignaciones();
-        } else {
-            seccionTabla.style.display = 'none';
+    const BuscarPermisosUsuario = async (usuario_id) => {
+        const url = `/contreras_final_comisiones_ingsoft1/asignacionpermisos/buscarPermisosUsuarioAPI?usuario_id=${usuario_id}`;
+        const config = {
+            method: 'GET'
+        }
+
+        try {
+            const respuesta = await fetch(url, config);
+            const datos = await respuesta.json();
+            const { codigo, mensaje, data } = datos;
+
+            if (codigo == 1) {
+                if (datatablePermisos) {
+                    datatablePermisos.clear().draw();
+                    datatablePermisos.rows.add(data).draw();
+                }
+            } else {
+                await Swal.fire({
+                    position: "center",
+                    icon: "info",
+                    title: "Error",
+                    text: mensaje,
+                    showConfirmButton: true,
+                });
+            }
+
+        } catch (error) {
+            console.log(error);
         }
     }
 
-    const MostrarPermisosUsuario = () => {
-        if (seccionPermisosUsuario.style.display === 'none') {
-            seccionPermisosUsuario.style.display = 'block';
-            seccionTabla.style.display = 'none';
+    const MostrarTabla = () => {
+        if (seccionTabla.style.display === 'none') {
+            seccionTabla.style.display = 'block';
+            BuscarAsignaciones();
         } else {
-            seccionPermisosUsuario.style.display = 'none';
+            seccionTabla.style.display = 'none';
         }
     }
 
@@ -350,86 +375,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchable: false,
                 orderable: false,
                 render: (data, type, row, meta) => {
-                    if (row.asignacion_situacion == 1) {
-                        return `
-                         <div class='d-flex justify-content-center'>
-                             <button class='btn btn-warning modificar mx-1' 
-                                 data-id="${data}" 
-                                 data-usuario="${row.asignacion_usuario_id || ''}"  
-                                 data-app="${row.asignacion_app_id || ''}"  
-                                 data-permiso="${row.asignacion_permiso_id || ''}"  
-                                 data-asigno="${row.asignacion_usuario_asigno || ''}"
-                                 data-motivo="${row.asignacion_motivo || ''}"
-                                 title="Modificar">
-                                 <i class='bi bi-pencil-square me-1'></i> Modificar
-                             </button>
-                             <button class='btn btn-danger revocar mx-1' 
-                                 data-id="${data}"
-                                 title="Revocar Permiso">
-                                <i class="bi bi-x-circle me-1"></i>Revocar
-                             </button>
-                             <button class='btn btn-dark eliminar mx-1' 
-                                 data-id="${data}"
-                                 title="Eliminar Registro">
-                                <i class="bi bi-trash me-1"></i>Eliminar
-                             </button>
-                         </div>`;
-                    } else {
-                        return `
-                         <div class='d-flex justify-content-center'>
-                             <button class='btn btn-dark eliminar mx-1' 
-                                 data-id="${data}"
-                                 title="Eliminar Registro">
-                                <i class="bi bi-trash me-1"></i>Eliminar
-                             </button>
-                         </div>`;
-                    }
+                    return `
+                     <div class='d-flex justify-content-center'>
+                         <button class='btn btn-warning modificar mx-1' 
+                             data-id="${data}" 
+                             data-usuario="${row.asignacion_usuario_id || ''}"  
+                             data-app="${row.asignacion_app_id || ''}"  
+                             data-permiso="${row.asignacion_permiso_id || ''}"  
+                             data-asigno="${row.asignacion_usuario_asigno || ''}"
+                             data-motivo="${row.asignacion_motivo || ''}"
+                             title="Modificar">
+                             <i class='bi bi-pencil-square me-1'></i> Modificar
+                         </button>
+                         <button class='btn btn-dark eliminar mx-1' 
+                             data-id="${data}"
+                             title="Eliminar Registro">
+                            <i class="bi bi-trash me-1"></i>Eliminar
+                         </button>
+                     </div>`;
                 }
-            }
-        ]
-    });
-
-    const datatablePermisos = new DataTable('#TablePermisosUsuario', {
-        dom: `
-            <"row mt-3 justify-content-between" 
-                <"col" l> 
-                <"col" B> 
-                <"col-3" f>
-            >
-            t
-            <"row mt-3 justify-content-between" 
-                <"col-md-3 d-flex align-items-center" i> 
-                <"col-md-8 d-flex justify-content-end" p>
-            >
-        `,
-        language: lenguaje,
-        data: [],
-        columns: [
-            {
-                title: 'No.',
-                data: 'permiso_id',
-                width: '10%',
-                render: (data, type, row, meta) => meta.row + 1
-            },
-            { 
-                title: 'Aplicación', 
-                data: 'app_nombre_corto',
-                width: '20%'
-            },
-            { 
-                title: 'Permiso', 
-                data: 'permiso_nombre',
-                width: '30%'
-            },
-            { 
-                title: 'Clave', 
-                data: 'permiso_clave',
-                width: '20%'
-            },
-            { 
-                title: 'Fecha Asignación', 
-                data: 'asignacion_fecha',
-                width: '20%'
             }
         ]
     });
@@ -519,58 +483,6 @@ document.addEventListener('DOMContentLoaded', function() {
         BtnModificar.disabled = false;
     }
 
-    const RevocarAsignacion = async (e) => {
-        const idAsignacion = e.currentTarget.dataset.id;
-
-        const AlertaConfirmarRevocar = await Swal.fire({
-            position: "center",
-            icon: "warning",
-            title: "¿Revocar este permiso?",
-            text: 'Esta acción revocará el permiso pero mantendrá el historial',
-            showConfirmButton: true,
-            confirmButtonText: 'Si, Revocar',
-            confirmButtonColor: '#dc3545',
-            cancelButtonText: 'No, Cancelar',
-            showCancelButton: true
-        });
-
-        if (AlertaConfirmarRevocar.isConfirmed) {
-            const url = `/contreras_final_comisiones_ingsoft1/asignacionpermisos/revocarAPI?id=${idAsignacion}`;
-            const config = {
-                method: 'GET'
-            }
-
-            try {
-                const consulta = await fetch(url, config);
-                const respuesta = await consulta.json();
-                const { codigo, mensaje } = respuesta;
-
-                if (codigo == 1) {
-                    await Swal.fire({
-                        position: "center",
-                        icon: "success",
-                        title: "Exito",
-                        text: mensaje,
-                        showConfirmButton: true,
-                    });
-                    
-                    BuscarAsignaciones();
-                } else {
-                    await Swal.fire({
-                        position: "center",
-                        icon: "error",
-                        title: "Error",
-                        text: mensaje,
-                        showConfirmButton: true,
-                    });
-                }
-
-            } catch (error) {
-                console.log(error);
-            }
-        }
-    }
-
     const EliminarAsignacion = async (e) => {
         const idAsignacion = e.currentTarget.dataset.id;
 
@@ -636,21 +548,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    FiltroUsuario.addEventListener('change', (e) => {
-        const usuarioId = e.target.value;
-        if (usuarioId) {
-            BuscarPermisosUsuario(usuarioId);
-        } else {
-            datatablePermisos.clear().draw();
-        }
-    });
+    if (FiltroUsuario) {
+        FiltroUsuario.addEventListener('change', (e) => {
+            const usuarioId = e.target.value;
+            if (usuarioId) {
+                BuscarPermisosUsuario(usuarioId);
+            }
+        });
+    }
 
-    datatable.on('click', '.revocar', RevocarAsignacion);
     datatable.on('click', '.modificar', llenarFormulario);
     datatable.on('click', '.eliminar', EliminarAsignacion);
     formAsignacionPermiso.addEventListener('submit', guardarAsignacion);
     BtnLimpiar.addEventListener('click', limpiarTodo);
     BtnModificar.addEventListener('click', ModificarAsignacion);
     BtnBuscarAsignaciones.addEventListener('click', MostrarTabla);
-    BtnVerPermisosUsuario.addEventListener('click', MostrarPermisosUsuario);
 });
