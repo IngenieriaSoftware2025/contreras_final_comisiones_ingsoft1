@@ -44,8 +44,8 @@ $router->post('/permisos/guardarAPI', [PermisosController::class, 'guardarAPI'])
 $router->get('/permisos/buscarAPI', [PermisosController::class, 'buscarAPI']);
 $router->post('/permisos/modificarAPI', [PermisosController::class, 'modificarAPI']);
 $router->get('/permisos/eliminar', [PermisosController::class, 'EliminarAPI']);
-$router->get('/permisos/buscarUsuariosAPI', [PermisosController::class, 'buscarUsuariosAPI']);
 $router->get('/permisos/buscarAplicacionesAPI', [PermisosController::class, 'buscarAplicacionesAPI']);
+$router->get('/API/verificarPermisos', [AppController::class, 'verificarPermisosAPI']);
 
 // ASIGNACIÓN DE PERMISOS
 $router->get('/asignacionpermisos', [AsignacionPermisosController::class, 'renderizarPagina']);
@@ -56,6 +56,7 @@ $router->get('/asignacionpermisos/eliminar', [AsignacionPermisosController::clas
 $router->get('/asignacionpermisos/buscarUsuariosAPI', [AsignacionPermisosController::class, 'buscarUsuariosAPI']);
 $router->get('/asignacionpermisos/buscarAplicacionesAPI', [AsignacionPermisosController::class, 'buscarAplicacionesAPI']);
 $router->get('/asignacionpermisos/buscarPermisosAPI', [AsignacionPermisosController::class, 'buscarPermisosAPI']);
+$router->get('/asignacionpermisos/buscarAdministradoresAPI', [AsignacionPermisosController::class, 'buscarAdministradoresAPI']);
 
 // COMISIONES
 $router->get('/comisiones', [ComisionController::class, 'renderizarPagina']);
@@ -63,20 +64,21 @@ $router->post('/comisiones/guardarAPI', [ComisionController::class, 'guardarAPI'
 $router->get('/comisiones/buscarAPI', [ComisionController::class, 'buscarAPI']);
 $router->post('/comisiones/modificarAPI', [ComisionController::class, 'modificarAPI']);
 $router->get('/comisiones/eliminar', [ComisionController::class, 'EliminarAPI']);
+$router->get('/comisiones/buscarPersonalAPI', [ComisionController::class, 'buscarPersonalAPI']);
 
-// COMISIÓN PERSONAL
+// PERSONAL COMISIONES
 $router->get('/comisionpersonal', [ComisionPersonalController::class, 'renderizarPagina']);
 $router->post('/comisionpersonal/guardarAPI', [ComisionPersonalController::class, 'guardarAPI']);
 $router->get('/comisionpersonal/buscarAPI', [ComisionPersonalController::class, 'buscarAPI']);
 $router->post('/comisionpersonal/modificarAPI', [ComisionPersonalController::class, 'modificarAPI']);
 $router->get('/comisionpersonal/eliminar', [ComisionPersonalController::class, 'EliminarAPI']);
-$router->get('/comisionpersonal/buscarComisionesAPI', [ComisionPersonalController::class, 'buscarComisionesAPI']);
-$router->get('/comisionpersonal/buscarUsuariosAPI', [ComisionPersonalController::class, 'buscarUsuariosAPI']);
-$router->get('/comisionpersonal/validarAsignacionAPI', [ComisionPersonalController::class, 'validarAsignacionAPI']);
 
 // ESTADÍSTICAS
 $router->get('/estadisticas', [EstadisticasController::class, 'renderizarPagina']);
-$router->get('/estadisticas/buscarComisionesPorTipoAPI', [EstadisticasController::class, 'buscarComisionesPorTipoAPI']);
+$router->get('/estadisticas/buscarComisionesPorComandoAPI', [EstadisticasController::class, 'buscarComisionesPorComandoAPI']);
+$router->get('/estadisticas/buscarComisionesPorUbicacionAPI', [EstadisticasController::class, 'buscarComisionesPorUbicacionAPI']);
+$router->get('/estadisticas/buscarPersonalPorUnidadAPI', [EstadisticasController::class, 'buscarPersonalPorUnidadAPI']);
+$router->get('/estadisticas/buscarComisionesVsPersonalAPI', [EstadisticasController::class, 'buscarComisionesVsPersonalAPI']);
 
 // MAPA
 $router->get('/mapa', [MapasController::class, 'renderizarPagina']);
@@ -85,11 +87,6 @@ $router->get('/mapa', [MapasController::class, 'renderizarPagina']);
 $router->get('/historial', [HistorialActController::class, 'renderizarPagina']);
 $router->get('/historial/buscarAPI', [HistorialActController::class, 'buscarAPI']);
 $router->get('/historial/buscarUsuariosAPI', [HistorialActController::class, 'buscarUsuariosAPI']);
-$router->get('/historial/exportarReporteAPI', [HistorialActController::class, 'exportarReporteAPI']);
-$router->get('/historial/buscarActividadPorTipoAPI', [HistorialActController::class, 'buscarActividadPorTipoAPI']);
-$router->get('/historial/buscarActividadPorUsuarioAPI', [HistorialActController::class, 'buscarActividadPorUsuarioAPI']);
-$router->get('/historial/buscarActividadPorDiaAPI', [HistorialActController::class, 'buscarActividadPorDiaAPI']);
-$router->get('/historial/buscarActividadPorModuloAPI', [HistorialActController::class, 'buscarActividadPorModuloAPI']);
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
 $router->comprobarRutas();

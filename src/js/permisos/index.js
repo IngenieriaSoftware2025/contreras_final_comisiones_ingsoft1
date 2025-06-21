@@ -9,49 +9,27 @@ const BtnGuardar = document.getElementById('BtnGuardar');
 const BtnModificar = document.getElementById('BtnModificar');
 const BtnLimpiar = document.getElementById('BtnLimpiar');
 const BtnBuscarPermisos = document.getElementById('BtnBuscarPermisos');
-const SelectUsuario = document.getElementById('usuario_id');
 const SelectAplicacion = document.getElementById('app_id');
-const SelectUsuarioAsigno = document.getElementById('permiso_usuario_asigno');
 const seccionTabla = document.getElementById('seccionTabla');
 
-const cargarUsuarios = async () => {
-    const url = `/contreras_final_comisiones_ingsoft1/permisos/buscarUsuariosAPI`;
-    const config = {
-        method: 'GET'
-    }
-
+const validarPermisoAccion = async (modulo, accion) => {
     try {
-        const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
-        const { codigo, mensaje, data } = datos;
-
-        if (codigo == 1) {
-            SelectUsuario.innerHTML = '<option value="">Seleccione un usuario</option>';
-            SelectUsuarioAsigno.innerHTML = '<option value="">Seleccione quién asigna</option>';
-            
-            data.forEach(usuario => {
-                const option = document.createElement('option');
-                option.value = usuario.usuario_id;
-                option.textContent = `${usuario.usuario_nom1} ${usuario.usuario_ape1}`;
-                SelectUsuario.appendChild(option);
-                
-                const option2 = document.createElement('option');
-                option2.value = usuario.usuario_id;
-                option2.textContent = `${usuario.usuario_nom1} ${usuario.usuario_ape1}`;
-                SelectUsuarioAsigno.appendChild(option2);
-            });
-        } else {
-            await Swal.fire({
+        const response = await fetch(`/contreras_final_comisiones_ingsoft1/API/verificarPermisos?modulo=${modulo}&accion=${accion}`);
+        const data = await response.json();
+        if (!data.permitido) {
+            Swal.fire({
                 position: "center",
-                icon: "info",
-                title: "Error",
-                text: mensaje,
+                icon: "warning",
+                title: "Sin permisos",
+                text: `No tienes permisos para ${accion} permisos`,
                 showConfirmButton: true,
             });
+            return false;
         }
-
+        return true;
     } catch (error) {
         console.log(error);
+        return false;
     }
 }
 
@@ -92,9 +70,10 @@ const cargarAplicaciones = async () => {
 
 const guardarPermiso = async e => {
     e.preventDefault();
+    if (!await validarPermisoAccion('PERMISOS', 'crear')) return;
     BtnGuardar.disabled = true;
 
-    if (!validarFormulario(formPermiso, ['permiso_id', 'permiso_fecha', 'permiso_situacion'])) {
+    if (!validarFormulario(formPermiso, ['permiso_id', 'permiso_situacion'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -147,6 +126,8 @@ const guardarPermiso = async e => {
 }
 
 const BuscarPermisos = async () => {
+    if (!await validarPermisoAccion('PERMISOS', 'buscar')) return;
+    
     const url = `/contreras_final_comisiones_ingsoft1/permisos/buscarAPI`;
     const config = {
         method: 'GET'
@@ -207,54 +188,39 @@ const datatable = new DataTable('#TablePermisos', {
         {
             title: 'No.',
             data: 'permiso_id',
-            width: '5%',
+            width: '8%',
             render: (data, type, row, meta) => meta.row + 1
-        },
-        { 
-            title: 'Usuario', 
-            data: 'usuario_nom1',
-            width: '12%',
-            render: (data, type, row) => {
-                return `${row.usuario_nom1} ${row.usuario_ape1}`;
-            }
         },
         { 
             title: 'Aplicación', 
             data: 'app_nombre_corto',
-            width: '10%'
+            width: '20%'
         },
         { 
-            title: 'Nombre del Permiso', 
-            data: 'permiso_nombre',
-            width: '15%'
-        },
-        { 
-            title: 'Clave del Permiso', 
-            data: 'permiso_clave',
-            width: '12%'
-        },
-        { 
-            title: 'Tipo', 
+            title: 'Tipo de Permiso', 
             data: 'permiso_tipo',
-            width: '8%'
+            width: '20%',
+            render: (data, type, row) => {
+                const colores = {
+                    'LECTURA': 'success',
+                    'ESCRITURA': 'primary', 
+                    'MODIFICACION': 'warning',
+                    'ELIMINACION': 'danger',
+                    'REPORTE': 'info'
+                };
+                const color = colores[data] || 'secondary';
+                return `<span class="badge bg-${color}">${data}</span>`;
+            }
         },
         { 
             title: 'Descripción', 
             data: 'permiso_desc',
-            width: '15%'
-        },
-        {
-            title: 'Asignado por',
-            data: 'asigno_nom1',
-            width: '12%',
-            render: (data, type, row) => {
-                return `${row.asigno_nom1} ${row.asigno_ape1}`;
-            }
+            width: '30%'
         },
         {
             title: 'Situación',
             data: 'permiso_situacion',
-            width: '8%',
+            width: '12%',
             render: (data, type, row) => {
                 return data == 1 ? "ACTIVO" : "INACTIVO";
             }
@@ -262,7 +228,7 @@ const datatable = new DataTable('#TablePermisos', {
         {
             title: 'Acciones',
             data: 'permiso_id',
-            width: '13%',
+            width: '10%',
             searchable: false,
             orderable: false,
             render: (data, type, row, meta) => {
@@ -270,14 +236,9 @@ const datatable = new DataTable('#TablePermisos', {
                  <div class='d-flex justify-content-center'>
                      <button class='btn btn-warning modificar mx-1' 
                          data-id="${data}" 
-                         data-usuario="${row.usuario_id || ''}"  
                          data-app="${row.app_id || ''}"  
-                         data-nombre="${row.permiso_nombre || ''}"  
-                         data-clave="${row.permiso_clave || ''}"  
+                         data-tipo="${row.permiso_tipo || ''}"  
                          data-desc="${row.permiso_desc || ''}"
-                         data-tipo="${row.permiso_tipo || ''}"
-                         data-asigno="${row.permiso_usuario_asigno || ''}"
-                         data-motivo="${row.permiso_motivo || ''}"
                          title="Modificar">
                          <i class='bi bi-pencil-square me-1'></i> Modificar
                      </button>
@@ -296,14 +257,9 @@ const llenarFormulario = (event) => {
     const datos = event.currentTarget.dataset;
 
     document.getElementById('permiso_id').value = datos.id;
-    document.getElementById('usuario_id').value = datos.usuario;
     document.getElementById('app_id').value = datos.app;
-    document.getElementById('permiso_nombre').value = datos.nombre;
-    document.getElementById('permiso_clave').value = datos.clave;
-    document.getElementById('permiso_desc').value = datos.desc;
     document.getElementById('permiso_tipo').value = datos.tipo;
-    document.getElementById('permiso_usuario_asigno').value = datos.asigno;
-    document.getElementById('permiso_motivo').value = datos.motivo;
+    document.getElementById('permiso_desc').value = datos.desc;
 
     BtnGuardar.classList.add('d-none');
     BtnModificar.classList.remove('d-none');
@@ -317,14 +273,14 @@ const limpiarTodo = () => {
     formPermiso.reset();
     BtnGuardar.classList.remove('d-none');
     BtnModificar.classList.add('d-none');
-    document.getElementById('permiso_tipo').value = 'FUNCIONAL';
 }
 
 const ModificarPermiso = async (event) => {
     event.preventDefault();
+    if (!await validarPermisoAccion('PERMISOS', 'modificar')) return;
     BtnModificar.disabled = true;
 
-    if (!validarFormulario(formPermiso, ['permiso_id', 'permiso_fecha', 'permiso_situacion'])) {
+    if (!validarFormulario(formPermiso, ['permiso_id', 'permiso_situacion'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -376,49 +332,29 @@ const ModificarPermiso = async (event) => {
 }
 
 const EliminarPermisos = async (e) => {
+    if (!await validarPermisoAccion('PERMISOS', 'eliminar')) return;
     const idPermiso = e.currentTarget.dataset.id;
-
-    if (!idPermiso || idPermiso === 'undefined') {
-        await Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "Error",
-            text: "No se pudo obtener el ID del permiso",
-            showConfirmButton: true,
-        });
-        return;
-    }
 
     const AlertaConfirmarEliminar = await Swal.fire({
         position: "center",
-        icon: "warning",
+        icon: "info",
         title: "¿Desea ejecutar esta acción?",
         text: 'Esta completamente seguro que desea eliminar este registro',
         showConfirmButton: true,
         confirmButtonText: 'Si, Eliminar',
-        confirmButtonColor: '#d33',
+        confirmButtonColor: 'red',
         cancelButtonText: 'No, Cancelar',
-        showCancelButton: true,
-        cancelButtonColor: '#3085d6'
+        showCancelButton: true
     });
 
     if (AlertaConfirmarEliminar.isConfirmed) {
-        const url = `/contreras_final_comisiones_ingsoft1/permisos/eliminarAPI`;
+        const url = `/contreras_final_comisiones_ingsoft1/permisos/eliminar?id=${idPermiso}`;
         const config = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `id=${idPermiso}`
+            method: 'GET'
         }
 
         try {
             const consulta = await fetch(url, config);
-            
-            if (!consulta.ok) {
-                throw new Error(`HTTP error! status: ${consulta.status}`);
-            }
-            
             const respuesta = await consulta.json();
             const { codigo, mensaje } = respuesta;
 
@@ -426,7 +362,7 @@ const EliminarPermisos = async (e) => {
                 await Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Éxito",
+                    title: "Exito",
                     text: mensaje,
                     showConfirmButton: true,
                 });
@@ -437,26 +373,16 @@ const EliminarPermisos = async (e) => {
                     position: "center",
                     icon: "error",
                     title: "Error",
-                    text: mensaje || "Error al eliminar el permiso",
+                    text: mensaje,
                     showConfirmButton: true,
                 });
             }
 
         } catch (error) {
-            console.error('Error al eliminar:', error);
-            await Swal.fire({
-                position: "center",
-                icon: "error",
-                title: "Error de conexión",
-                text: "No se pudo conectar con el servidor",
-                showConfirmButton: true,
-            });
+            console.log(error);
         }
     }
 }
-
-cargarUsuarios();
-cargarAplicaciones();
 
 datatable.on('click', '.eliminar', EliminarPermisos);
 datatable.on('click', '.modificar', llenarFormulario);
@@ -465,3 +391,7 @@ formPermiso.addEventListener('submit', guardarPermiso);
 BtnLimpiar.addEventListener('click', limpiarTodo);
 BtnModificar.addEventListener('click', ModificarPermiso);
 BtnBuscarPermisos.addEventListener('click', MostrarTabla);
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarAplicaciones();
+});

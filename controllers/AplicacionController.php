@@ -6,6 +6,7 @@ use Exception;
 use MVC\Router;
 use Model\ActiveRecord;
 use Model\Aplicacion;
+use Controllers\HistorialActController;
 
 class AplicacionController extends ActiveRecord
 {
@@ -107,13 +108,12 @@ class AplicacionController extends ActiveRecord
                 exit;
             }
             
-            $_POST['app_fecha_creacion'] = '';
-            $_POST['app_situacion'] = 1;
-            
             $aplicacion = new Aplicacion($_POST);
             $resultado = $aplicacion->crear();
 
             if($resultado['resultado'] == 1){
+                HistorialActController::registrarActividad('APLICACIONES', 'CREAR', 'Registró aplicación: ' . $_POST['app_nombre_largo'], 'aplicacion/guardar');
+                
                 http_response_code(200);
                 echo json_encode([
                     'codigo' => 1,
@@ -143,19 +143,9 @@ class AplicacionController extends ActiveRecord
     public static function buscarAPI()
     {
         try {
-            $fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : null;
-            $fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : null;
             $nombre = isset($_GET['nombre']) ? $_GET['nombre'] : null;
 
             $condiciones = ["app_situacion = 1"];
-
-            if ($fecha_inicio) {
-                $condiciones[] = "app_fecha_creacion >= '{$fecha_inicio}'";
-            }
-
-            if ($fecha_fin) {
-                $condiciones[] = "app_fecha_creacion <= '{$fecha_fin}'";
-            }
 
             if ($nombre) {
                 $condiciones[] = "(app_nombre_largo LIKE '%{$nombre}%' OR app_nombre_medium LIKE '%{$nombre}%' OR app_nombre_corto LIKE '%{$nombre}%')";
@@ -275,20 +265,22 @@ class AplicacionController extends ActiveRecord
                 return;
             }
 
-            $data = Aplicacion::find($id);
-            $data->sincronizar([
-                'app_nombre_largo' => $_POST['app_nombre_largo'],
-                'app_nombre_medium' => $_POST['app_nombre_medium'],
-                'app_nombre_corto' => $_POST['app_nombre_corto'],
-                'app_situacion' => 1
-            ]);
-            $data->actualizar();
+            $sql = "UPDATE macs_aplicacion SET 
+                    app_nombre_largo = '{$_POST['app_nombre_largo']}',
+                    app_nombre_medium = '{$_POST['app_nombre_medium']}',
+                    app_nombre_corto = '{$_POST['app_nombre_corto']}'
+                    WHERE app_id = {$id}";
+            
+            $resultado = self::SQL($sql);
+
+            HistorialActController::registrarActividad('APLICACIONES', 'ACTUALIZAR', 'Modificó aplicación: ' . $_POST['app_nombre_largo'], 'aplicacion/modificar');
 
             http_response_code(200);
             echo json_encode([
                 'codigo' => 1,
                 'mensaje' => 'La informacion de la aplicacion ha sido modificada exitosamente'
             ]);
+            
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode([
@@ -326,7 +318,14 @@ class AplicacionController extends ActiveRecord
                 return;
             }
 
+            $sql_aplicacion = "SELECT app_nombre_largo FROM macs_aplicacion WHERE app_id = $id";
+            $aplicacion_data = self::fetchFirst($sql_aplicacion);
+
             $ejecutar = Aplicacion::EliminarAplicaciones($id);
+
+            if ($aplicacion_data) {
+                HistorialActController::registrarActividad('APLICACIONES', 'ELIMINAR', 'Eliminó aplicación: ' . $aplicacion_data['app_nombre_largo'], 'aplicacion/eliminar');
+            }
 
             http_response_code(200);
             echo json_encode([
@@ -338,132 +337,6 @@ class AplicacionController extends ActiveRecord
             echo json_encode([
                 'codigo' => 0,
                 'mensaje' => 'Error al Eliminar',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarEstadisticasAPI()
-    {
-        try {
-            $sql = "SELECT 
-                        a.app_id,
-                        a.app_nombre_corto,
-                        a.app_nombre_largo,
-                        COUNT(DISTINCT p.permiso_id) as total_permisos,
-                        COUNT(DISTINCT ap.asignacion_id) as total_asignaciones,
-                        COUNT(DISTINCT ap.asignacion_usuario_id) as usuarios_con_permisos
-                    FROM macs_aplicacion a
-                    LEFT JOIN macs_permiso p ON a.app_id = p.app_id AND p.permiso_situacion = 1
-                    LEFT JOIN macs_asig_permisos ap ON a.app_id = ap.asignacion_app_id AND ap.asignacion_situacion = 1
-                    WHERE a.app_situacion = 1
-                    GROUP BY a.app_id, a.app_nombre_corto, a.app_nombre_largo
-                    ORDER BY total_asignaciones DESC";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Estadísticas de aplicaciones obtenidas correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener las estadísticas',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarPermisosPorAplicacionAPI()
-    {
-        try {
-            $app_id = isset($_GET['app_id']) ? $_GET['app_id'] : null;
-
-            if (!$app_id) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Debe especificar el ID de la aplicación'
-                ]);
-                return;
-            }
-
-            $sql = "SELECT 
-                        p.permiso_id,
-                        p.permiso_nombre,
-                        p.permiso_clave,
-                        p.permiso_tipo,
-                        p.permiso_desc,
-                        COUNT(ap.asignacion_id) as veces_asignado
-                    FROM macs_permiso p
-                    LEFT JOIN macs_asig_permisos ap ON p.permiso_id = ap.asignacion_permiso_id AND ap.asignacion_situacion = 1
-                    WHERE p.app_id = {$app_id} AND p.permiso_situacion = 1
-                    GROUP BY p.permiso_id, p.permiso_nombre, p.permiso_clave, p.permiso_tipo, p.permiso_desc
-                    ORDER BY veces_asignado DESC";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Permisos de la aplicación obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los permisos de la aplicación',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarUsuariosPorAplicacionAPI()
-    {
-        try {
-            $app_id = isset($_GET['app_id']) ? $_GET['app_id'] : null;
-
-            if (!$app_id) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Debe especificar el ID de la aplicación'
-                ]);
-                return;
-            }
-
-            $sql = "SELECT DISTINCT
-                        u.usuario_id,
-                        u.usuario_nom1,
-                        u.usuario_ape1,
-                        u.usuario_correo,
-                        COUNT(ap.asignacion_id) as permisos_asignados
-                    FROM macs_usuario u
-                    INNER JOIN macs_asig_permisos ap ON u.usuario_id = ap.asignacion_usuario_id
-                    WHERE ap.asignacion_app_id = {$app_id} 
-                    AND ap.asignacion_situacion = 1 
-                    AND u.usuario_situacion = 1
-                    GROUP BY u.usuario_id, u.usuario_nom1, u.usuario_ape1, u.usuario_correo
-                    ORDER BY permisos_asignados DESC";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Usuarios de la aplicación obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los usuarios de la aplicación',
                 'detalle' => $e->getMessage(),
             ]);
         }

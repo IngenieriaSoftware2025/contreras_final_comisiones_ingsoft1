@@ -9,13 +9,71 @@ const BtnGuardar = document.getElementById('BtnGuardar');
 const BtnModificar = document.getElementById('BtnModificar');
 const BtnLimpiar = document.getElementById('BtnLimpiar');
 const BtnBuscarComisiones = document.getElementById('BtnBuscarComisiones');
+const SelectPersonalAsignado = document.getElementById('personal_asignado_id');
 const seccionTabla = document.getElementById('seccionTabla');
+
+const validarPermisoAccion = async (modulo, accion) => {
+    try {
+        const response = await fetch(`/contreras_final_comisiones_ingsoft1/API/verificarPermisos?modulo=${modulo}&accion=${accion}`);
+        const data = await response.json();
+        if (!data.permitido) {
+            Swal.fire({
+                position: "center",
+                icon: "warning",
+                title: "Sin permisos",
+                text: `No tienes permisos para ${accion} comisiones`,
+                showConfirmButton: true,
+            });
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+
+const cargarPersonal = async () => {
+    const url = `/contreras_final_comisiones_ingsoft1/comisiones/buscarPersonalAPI`;
+    const config = {
+        method: 'GET'
+    }
+
+    try {
+        const respuesta = await fetch(url, config);
+        const datos = await respuesta.json();
+        const { codigo, mensaje, data } = datos;
+
+        if (codigo == 1) {
+            SelectPersonalAsignado.innerHTML = '<option value="">Seleccione personal (opcional)</option>';
+            
+            data.forEach(personal => {
+                const option = document.createElement('option');
+                option.value = personal.personal_id;
+                option.textContent = `${personal.personal_nom1} ${personal.personal_ape1} (${personal.personal_rango})`;
+                SelectPersonalAsignado.appendChild(option);
+            });
+        } else {
+            await Swal.fire({
+                position: "center",
+                icon: "info",
+                title: "Error",
+                text: mensaje,
+                showConfirmButton: true,
+            });
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+}
 
 const guardarComision = async e => {
     e.preventDefault();
+    if (!await validarPermisoAccion('COMISIONES', 'crear')) return;
     BtnGuardar.disabled = true;
 
-    if (!validarFormulario(formComision, ['comision_id', 'comision_fecha_creacion', 'comision_usuario_creo', 'comision_situacion'])) {
+    if (!validarFormulario(formComision, ['comision_id', 'comision_usuario_creo', 'comision_situacion', 'personal_asignado_id'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -139,9 +197,9 @@ const datatable = new DataTable('#TableComisiones', {
             width: '20%'
         },
         { 
-            title: 'Tipo', 
-            data: 'comision_tipo',
-            width: '10%'
+            title: 'Comando', 
+            data: 'comision_comando',
+            width: '15%'
         },
         { 
             title: 'Fecha Inicio', 
@@ -159,7 +217,7 @@ const datatable = new DataTable('#TableComisiones', {
         { 
             title: 'Ubicación', 
             data: 'comision_ubicacion',
-            width: '15%'
+            width: '12%'
         },
         {
             title: 'Estado',
@@ -185,6 +243,18 @@ const datatable = new DataTable('#TableComisiones', {
             }
         },
         {
+            title: 'Personal Asignado',
+            data: 'personal_nom1',
+            width: '12%',
+            render: (data, type, row) => {
+                if (row.personal_nom1 && row.personal_apellido) {
+                    return `${row.personal_nom1} ${row.personal_apellido}`;
+                } else {
+                    return '<span class="text-muted">Sin asignar</span>';
+                }
+            }
+        },
+        {
             title: 'Creado por',
             data: 'usuario_nom1',
             width: '10%',
@@ -203,7 +273,7 @@ const datatable = new DataTable('#TableComisiones', {
         {
             title: 'Acciones',
             data: 'comision_id',
-            width: '15%',
+            width: '13%',
             searchable: false,
             orderable: false,
             render: (data, type, row, meta) => {
@@ -213,13 +283,14 @@ const datatable = new DataTable('#TableComisiones', {
                          data-id="${data}" 
                          data-titulo="${row.comision_titulo || ''}"  
                          data-descripcion="${row.comision_descripcion || ''}"  
-                         data-tipo="${row.comision_tipo || ''}"
+                         data-comando="${row.comision_comando || ''}"
                          data-fecha-inicio="${row.comision_fecha_inicio || ''}"
                          data-duracion="${row.comision_duracion || ''}"
                          data-duracion-tipo="${row.comision_duracion_tipo || ''}"
                          data-ubicacion="${row.comision_ubicacion || ''}"
                          data-estado="${row.comision_estado || ''}"
                          data-observaciones="${row.comision_observaciones || ''}"
+                         data-personal="${row.personal_asignado_id || ''}"
                          title="Modificar">
                          <i class='bi bi-pencil-square me-1'></i> Modificar
                      </button>
@@ -240,13 +311,14 @@ const llenarFormulario = (event) => {
     document.getElementById('comision_id').value = datos.id;
     document.getElementById('comision_titulo').value = datos.titulo;
     document.getElementById('comision_descripcion').value = datos.descripcion;
-    document.getElementById('comision_tipo').value = datos.tipo;
+    document.getElementById('comision_comando').value = datos.comando;
     document.getElementById('comision_fecha_inicio').value = datos.fechaInicio;
     document.getElementById('comision_duracion').value = datos.duracion;
     document.getElementById('comision_duracion_tipo').value = datos.duracionTipo;
     document.getElementById('comision_ubicacion').value = datos.ubicacion;
     document.getElementById('comision_estado').value = datos.estado;
     document.getElementById('comision_observaciones').value = datos.observaciones;
+    document.getElementById('personal_asignado_id').value = datos.personal;
 
     BtnGuardar.classList.add('d-none');
     BtnModificar.classList.remove('d-none');
@@ -265,9 +337,10 @@ const limpiarTodo = () => {
 
 const ModificarComision = async (event) => {
     event.preventDefault();
+    if (!await validarPermisoAccion('COMISIONES', 'modificar')) return;
     BtnModificar.disabled = true;
 
-    if (!validarFormulario(formComision, ['comision_id', 'comision_fecha_creacion', 'comision_usuario_creo', 'comision_situacion'])) {
+    if (!validarFormulario(formComision, ['comision_id', 'comision_usuario_creo', 'comision_situacion', 'personal_asignado_id'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -318,73 +391,8 @@ const ModificarComision = async (event) => {
     BtnModificar.disabled = false;
 }
 
-const CambiarEstadoComision = async (e) => {
-    const idComision = e.currentTarget.dataset.id;
-    const estadoActual = e.currentTarget.dataset.estado;
-
-    const { value: nuevoEstado } = await Swal.fire({
-        title: 'Cambiar Estado de Comisión',
-        input: 'select',
-        inputOptions: {
-            'PROGRAMADA': 'PROGRAMADA',
-            'EN_CURSO': 'EN CURSO',
-            'COMPLETADA': 'COMPLETADA',
-            'CANCELADA': 'CANCELADA'
-        },
-        inputValue: estadoActual,
-        showCancelButton: true,
-        confirmButtonText: 'Cambiar Estado',
-        cancelButtonText: 'Cancelar',
-        inputValidator: (value) => {
-            if (!value) {
-                return 'Debe seleccionar un estado';
-            }
-        }
-    });
-
-    if (nuevoEstado && nuevoEstado !== estadoActual) {
-        const formData = new FormData();
-        formData.append('comision_id', idComision);
-        formData.append('comision_estado', nuevoEstado);
-
-        const url = '/contreras_final_comisiones_ingsoft1/comisiones/cambiarEstadoAPI';
-        const config = {
-            method: 'POST',
-            body: formData
-        }
-
-        try {
-            const consulta = await fetch(url, config);
-            const respuesta = await consulta.json();
-            const { codigo, mensaje } = respuesta;
-
-            if (codigo == 1) {
-                await Swal.fire({
-                    position: "center",
-                    icon: "success",
-                    title: "Exito",
-                    text: mensaje,
-                    showConfirmButton: true,
-                });
-                
-                BuscarComisiones();
-            } else {
-                await Swal.fire({
-                    position: "center",
-                    icon: "error",
-                    title: "Error",
-                    text: mensaje,
-                    showConfirmButton: true,
-                });
-            }
-
-        } catch (error) {
-            console.log(error);
-        }
-    }
-}
-
 const EliminarComisiones = async (e) => {
+    if (!await validarPermisoAccion('COMISIONES', 'eliminar')) return;
     const idComision = e.currentTarget.dataset.id;
 
     const AlertaConfirmarEliminar = await Swal.fire({
@@ -435,6 +443,8 @@ const EliminarComisiones = async (e) => {
         }
     }
 }
+
+cargarPersonal();
 
 datatable.on('click', '.eliminar', EliminarComisiones);
 datatable.on('click', '.modificar', llenarFormulario);

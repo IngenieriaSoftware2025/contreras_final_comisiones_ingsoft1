@@ -56,14 +56,66 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
       cursor: pointer;
     }
+
+    .user-welcome-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
     
 </style>
 <body>
-    <div class="header">
-    <div class="logo">¡Bienvenido al Sistema de Comisiones MACS!</div>
-    </div>
-    
     <div class="container">
+        <?php if(isset($_SESSION['user'])): ?>
+        <div class="row mb-4 justify-content-center">
+            <div class="col-lg-8">
+                <div class="card user-welcome-card border-0 rounded-4">
+                    <div class="card-body text-center p-4">
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-person-fill text-white" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <h4 class="mb-1 text-primary fw-bold"><?= $_SESSION['user'] ?></h4>
+                                <?php if($_SESSION['rol'] === 'administrador'): ?>
+                                    <span class="badge bg-success fs-6">ADMINISTRADOR</span>
+                                    <p class="text-muted mt-2 mb-0">Tienes acceso completo a todos los módulos del sistema</p>
+                                <?php else: ?>
+                                    <span class="badge bg-primary fs-6">USUARIO</span>
+                                    <?php if(isset($permisos_usuario) && !empty($permisos_usuario)): ?>
+                                        <?php
+                                            $modulos = array_unique(array_column($permisos_usuario, 'modulo'));
+                                            $modulosTexto = implode(', ', $modulos);
+                                            
+                                            $permisosDetalle = [];
+                                            foreach($permisos_usuario as $permiso) {
+                                                $permisosDetalle[] = $permiso['accion'] . ' en ' . $permiso['modulo'];
+                                            }
+                                            $permisosTexto = implode(', ', $permisosDetalle);
+                                        ?>
+                                        <p class="text-muted mt-2 mb-1">
+                                            <strong>Tiene acceso a:</strong> <?= $modulosTexto ?>
+                                        </p>
+                                        <p class="text-muted mb-0">
+                                            <strong>Permisos:</strong> <?= $permisosTexto ?>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-muted mt-2 mb-0">No tienes permisos asignados. Contacta al administrador.</p>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <div class="header">
+            <div class="logo">¡Bienvenido al Sistema de Comisiones MACS!</div>
+        </div>
+        
         <div class="row mb-5">
             <div class="col-md-8 mx-auto text-center">
                 <p class="lead text-white">
@@ -80,12 +132,24 @@
             <div class="col-md-3 mb-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-img-top product-img">
-                        <img src="https://img.freepik.com/vector-premium/usuarios-grupo-personas-icono-perfil-usuario_24877-40756.jpg" alt="Gestión de Usuarios" style="max-width:100%; max-height:100%; border-radius:10px;">
+                        <img src="https://img.freepik.com/vector-gratis/grupo-personas-trabajando-juntas_24877-51310.jpg" alt="Personal" style="max-width:100%; max-height:100%; border-radius:10px;">
                     </div>
                     <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Gestión de Usuarios</h5>
-                        <p class="card-text text-muted">Administra personal de la brigada con información completa y fotografías.</p>
-                        <a href="/contreras_final_comisiones_ingsoft1/usuarios" class="btn btn-primary">Acceder</a>
+                        <h5 class="card-title fw-bold">Personal Comisiones</h5>
+                        <p class="card-text text-muted">Registra el personal que realizara comisiones.</p>
+                        <a href="/contreras_final_comisiones_ingsoft1/comisionpersonal" class="btn btn-primary">Acceder</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-img-top product-img">
+                        <img src="https://img.freepik.com/vector-gratis/concepto-trabajo-equipo-negocios_1284-4006.jpg" alt="Comisiones" style="max-width:100%; max-height:100%; border-radius:10px;">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Gestión de Comisiones</h5>
+                        <p class="card-text text-muted">Registra comisiones de Transmisiones o Informática con duración y ubicación.</p>
+                        <a href="/contreras_final_comisiones_ingsoft1/comisiones" class="btn btn-primary">Acceder</a>
                     </div>
                 </div>
             </div>
@@ -113,81 +177,71 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-4">
+        </div>
+
+        <div class="row mb-4">
+            <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador'): ?>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-img-top product-img">
+                        <img src="https://img.freepik.com/vector-premium/usuarios-grupo-personas-icono-perfil-usuario_24877-40756.jpg" alt="Gestión de Usuarios" style="max-width:100%; max-height:100%; border-radius:10px;">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Gestión de Usuarios</h5>
+                        <p class="card-text text-muted">Administra personal de la brigada con información completa y fotografías.</p>
+                        <a href="/contreras_final_comisiones_ingsoft1/usuarios" class="btn btn-primary">Acceder</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-img-top product-img">
                       <img src="https://static.vecteezy.com/system/resources/previews/005/190/843/non_2x/acquiring-permits-concept-icon-obtaining-license-idea-thin-line-illustration-getting-approval-legal-documents-and-permissions-formal-application-isolated-outline-drawing-editable-stroke-vector.jpg" alt="permisos" style="max-width:100%; max-height:100%; border-radius:10px;">
                     </div>
                     <div class="card-body text-center">
                         <h5 class="card-title fw-bold">Asignación de Permisos</h5>
-                        <p class="card-text text-muted">Asigna permisos específicos a usuarios para control de acceso granular.</p>
+                        <p class="card-text text-muted">Asigna permisos específicos a usuarios para control de acceso.</p>
                         <a href="/contreras_final_comisiones_ingsoft1/asignacionpermisos" class="btn btn-primary">Acceder</a>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="row mb-4">
             <div class="col-md-4 mb-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-img-top product-img">
-                        <img src="https://img.freepik.com/vector-gratis/concepto-trabajo-equipo-negocios_1284-4006.jpg" alt="Comisiones" style="max-width:100%; max-height:100%; border-radius:10px;">
-                    </div>
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Gestión de Comisiones</h5>
-                        <p class="card-text text-muted">Registra comisiones por tipo: Transmisiones o Informática con duración y ubicación.</p>
-                        <a href="/contreras_final_comisiones_ingsoft1/comisiones" class="btn btn-primary">Acceder</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-img-top product-img">
-                      <img src="https://img.freepik.com/vector-gratis/grupo-personas-trabajando-juntas_24877-51310.jpg" alt="Personal" style="max-width:100%; max-height:100%; border-radius:10px;">
-                    </div>
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Asignación de Personal</h5>
-                        <p class="card-text text-muted">Asigna personal a comisiones con validación anti-duplicación.</p>
-                        <a href="/contreras_final_comisiones_ingsoft1/comisionpersonal" class="btn btn-primary">Acceder</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-img-top product-img">
-                      <img src="https://img.freepik.com/vector-gratis/mapa-mundo-ubicacion-pin_24877-54109.jpg" alt="Mapa" style="max-width:100%; max-height:100%; border-radius:10px;">
-                    </div>
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Ubicación Brigada</h5>
-                        <p class="card-text text-muted">Visualiza la ubicación de la Brigada de Comunicaciones en el mapa.</p>
-                        <a href="/contreras_final_comisiones_ingsoft1/mapa" class="btn btn-primary">Acceder</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-md-6 mb-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-img-top product-img">
-                        <img src="https://img.freepik.com/vector-gratis/analisis-datos-graficos_24877-51215.jpg" alt="Estadísticas" style="max-width:100%; max-height:100%; border-radius:10px;">
-                    </div>
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold">Estadísticas y Gráficas</h5>
-                        <p class="card-text text-muted">Visualiza estadísticas de comisiones con gráficas interactivas y reportes.</p>
-                        <a href="/contreras_final_comisiones_ingsoft1/estadisticas" class="btn btn-primary">Acceder</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-img-top product-img">
                       <img src="https://img.freepik.com/vector-gratis/concepto-historial-navegacion_23-2148207095.jpg" alt="Historial" style="max-width:100%; max-height:100%; border-radius:10px;">
                     </div>
                     <div class="card-body text-center">
                         <h5 class="card-title fw-bold">Historial de Actividades</h5>
-                        <p class="card-text text-muted">Auditoría completa con historial de actividades y reportes en DataTables.</p>
+                        <p class="card-text text-muted">Historial de actividades y reportes.</p>
                         <a href="/contreras_final_comisiones_ingsoft1/historial" class="btn btn-primary">Acceder</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-img-top product-img">
+                        <img src="https://img.freepik.com/vector-gratis/analisis-datos-graficos_24877-51215.jpg" alt="Estadísticas" style="max-width:100%; max-height:100%; border-radius:10px;">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Estadísticas y Gráficas</h5>
+                        <p class="card-text text-muted">Visualiza estadísticas de comisiones con gráficas y reportes.</p>
+                        <a href="/contreras_final_comisiones_ingsoft1/estadisticas" class="btn btn-primary">Acceder</a>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-img-top product-img">
+                      <img src="https://img.freepik.com/vector-gratis/mapa-mundo-ubicacion-pin_24877-54109.jpg" alt="Mapa" style="max-width:100%; max-height:100%; border-radius:10px;">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">Mapa de la Brigada</h5>
+                        <p class="card-text text-muted">Visualiza la ubicación de la Brigada de Comunicaciones en el mapa.</p>
+                        <a href="/contreras_final_comisiones_ingsoft1/mapa" class="btn btn-primary">Acceder</a>
                     </div>
                 </div>
             </div>
@@ -195,11 +249,6 @@
         
         <div class="row mt-5">
             <div class="col-md-6 mx-auto text-center">
-                <h2 class="mb-4 text-uppercase fw-bold text-white">Características Principales</h2><br>
-                <p class="text-light"><strong>Organiza:</strong> Gestiona comisiones de Transmisiones e Informática con control de duración.</p>
-                <p class="text-light"><strong>Controla:</strong> Valida asignaciones de personal evitando duplicaciones y conflictos.</p>
-                <p class="text-light"><strong>Administra:</strong> Supervisa todo desde una interfaz intuitiva con mapas y estadísticas.</p>
-                <p class="text-light"><strong>Audita:</strong> Mantén historial completo de actividades para cumplir normativas.</p>
                 <a href="/contreras_final_comisiones_ingsoft1/comisiones" class="btn btn-light btn-lg mt-3">Comenzar a gestionar comisiones</a>
             </div>
         </div>

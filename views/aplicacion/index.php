@@ -9,7 +9,6 @@
                     </div>
                     <form id="formAplicacion" class="p-4 bg-white rounded-3 shadow-sm border">
                         <input type="hidden" id="app_id" name="app_id">
-                        <input type="hidden" id="app_fecha_creacion" name="app_fecha_creacion" value="">
                         <input type="hidden" id="app_situacion" name="app_situacion" value="1">
                         
                         <div class="row g-4 mb-3">
@@ -78,4 +77,4 @@
 </div>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<script src="<?= asset('build/js/aplicacion/index.js') ?>"></script
+<script src="<?= asset('build/js/aplicacion/index.js') ?>"></script>

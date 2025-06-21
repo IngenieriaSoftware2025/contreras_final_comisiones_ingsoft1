@@ -11,11 +11,9 @@ const InputFechaInicio = document.getElementById('fecha_inicio');
 const InputFechaFin = document.getElementById('fecha_fin');
 const BtnLimpiarFiltros = document.getElementById('BtnLimpiarFiltros');
 const seccionTabla = document.getElementById('seccionTabla');
-const BtnExportarReporte = document.getElementById('BtnExportarReporte');
-const BtnEstadisticas = document.getElementById('BtnEstadisticas');
 
 const cargarUsuarios = async () => {
-    const url = `/proyecto02_macs/historial/buscarUsuariosAPI`;
+    const url = `/contreras_final_comisiones_ingsoft1/historial/buscarUsuariosAPI`;
     const config = {
         method: 'GET'
     }
@@ -25,8 +23,8 @@ const cargarUsuarios = async () => {
         const datos = await respuesta.json();
         const { codigo, mensaje, data } = datos;
 
-        if (codigo == 1) {
-            SelectUsuario.innerHTML = '<option value="">Todos los usuarios</option>';
+        if (codigo == 1 && data && data.length > 0) {
+            SelectUsuario.innerHTML = `<option value="">Todos los usuarios</option>`;
             
             data.forEach(usuario => {
                 const option = document.createElement('option');
@@ -35,13 +33,9 @@ const cargarUsuarios = async () => {
                 SelectUsuario.appendChild(option);
             });
         } else {
-            await Swal.fire({
-                position: "center",
-                icon: "info",
-                title: "Error",
-                text: mensaje,
-                showConfirmButton: true,
-            });
+            if (SelectUsuario) {
+                SelectUsuario.innerHTML = `<option value="">Todos los usuarios</option>`;
+            }
         }
 
     } catch (error) {
@@ -114,7 +108,7 @@ const BuscarActividades = async () => {
         params.append('accion', SelectAccion.value);
     }
 
-    const url = `/proyecto02_macs/historial/buscarAPI${params.toString() ? '?' + params.toString() : ''}`;
+    const url = `/contreras_final_comisiones_ingsoft1/historial/buscarAPI${params.toString() ? '?' + params.toString() : ''}`;
     const config = {
         method: 'GET'
     }
@@ -145,153 +139,6 @@ const BuscarActividades = async () => {
 
     } catch (error) {
         console.log(error);
-    }
-}
-
-const exportarReporte = async () => {
-    const params = new URLSearchParams();
-    
-    if (InputFechaInicio.value) {
-        params.append('fecha_inicio', InputFechaInicio.value);
-    }
-    
-    if (InputFechaFin.value) {
-        params.append('fecha_fin', InputFechaFin.value);
-    }
-    
-    if (SelectUsuario.value) {
-        params.append('usuario_id', SelectUsuario.value);
-    }
-
-    const url = `/proyecto02_macs/historial/exportarReporteAPI${params.toString() ? '?' + params.toString() : ''}`;
-    
-    try {
-        const respuesta = await fetch(url);
-        const datos = await respuesta.json();
-        const { codigo, mensaje, data } = datos;
-
-        if (codigo == 1) {
-            const csv = convertirACSV(data);
-            descargarCSV(csv, 'reporte_actividades.csv');
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Reporte exportado',
-                text: 'El reporte se ha descargado correctamente'
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: mensaje
-            });
-        }
-
-    } catch (error) {
-        console.log(error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Error al exportar el reporte'
-        });
-    }
-}
-
-const convertirACSV = (data) => {
-    if (!data.length) return '';
-    
-    const headers = Object.keys(data[0]);
-    const csvHeaders = headers.join(',');
-    
-    const csvRows = data.map(row => {
-        return headers.map(header => {
-            const value = row[header] || '';
-            return `"${value.toString().replace(/"/g, '""')}"`;
-        }).join(',');
-    });
-    
-    return [csvHeaders, ...csvRows].join('\n');
-}
-
-const descargarCSV = (csv, filename) => {
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-}
-
-const mostrarEstadisticas = async () => {
-    try {
-        const [porTipo, porUsuario, porDia, porModulo] = await Promise.all([
-            fetch('/proyecto02_macs/historial/buscarActividadPorTipoAPI').then(r => r.json()),
-            fetch('/proyecto02_macs/historial/buscarActividadPorUsuarioAPI').then(r => r.json()),
-            fetch('/proyecto02_macs/historial/buscarActividadPorDiaAPI').then(r => r.json()),
-            fetch('/proyecto02_macs/historial/buscarActividadPorModuloAPI').then(r => r.json())
-        ]);
-
-        let estadisticasHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Top Acciones</h5>
-                    <ul class="list-group">
-                        ${porTipo.data?.slice(0, 5).map(item => 
-                            `<li class="list-group-item d-flex justify-content-between">
-                                <span>${item.accion}</span>
-                                <span class="badge bg-primary">${item.cantidad}</span>
-                            </li>`
-                        ).join('') || '<li class="list-group-item">No hay datos</li>'}
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h5>Usuarios Más Activos</h5>
-                    <ul class="list-group">
-                        ${porUsuario.data?.slice(0, 5).map(item => 
-                            `<li class="list-group-item d-flex justify-content-between">
-                                <span>${item.usuario}</span>
-                                <span class="badge bg-success">${item.actividades}</span>
-                            </li>`
-                        ).join('') || '<li class="list-group-item">No hay datos</li>'}
-                    </ul>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <h5>Distribución por Módulos</h5>
-                    <ul class="list-group">
-                        ${porModulo.data?.map(item => 
-                            `<li class="list-group-item d-flex justify-content-between">
-                                <span>${item.modulo}</span>
-                                <span class="badge bg-info">${item.cantidad}</span>
-                            </li>`
-                        ).join('') || '<li class="list-group-item">No hay datos</li>'}
-                    </ul>
-                </div>
-            </div>
-        `;
-
-        Swal.fire({
-            title: 'Estadísticas del Sistema',
-            html: estadisticasHTML,
-            width: '800px',
-            showCloseButton: true,
-            focusConfirm: false
-        });
-
-    } catch (error) {
-        console.log(error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Error al obtener las estadísticas'
-        });
     }
 }
 
@@ -338,7 +185,9 @@ const datatable = new DataTable('#TableHistorialActividades', {
             data: null,
             width: '5%',
             render: (data, type, row, meta) => {
-                if (row.esSeparador) return '';
+                if (row.esSeparador) {
+                    return '';
+                }
                 return row.numeroConsecutivo;
             }
         },
@@ -375,9 +224,7 @@ const datatable = new DataTable('#TableHistorialActividades', {
                     'INICIAR_SESION': '<span class="badge bg-info">INICIAR SESIÓN</span>',
                     'CERRAR_SESION': '<span class="badge bg-secondary">CERRAR SESIÓN</span>',
                     'ASIGNAR': '<span class="badge bg-primary">ASIGNAR</span>',
-                    'DESASIGNAR': '<span class="badge bg-warning">DESASIGNAR</span>',
-                    'EXPORTAR': '<span class="badge bg-success">EXPORTAR</span>',
-                    'CONSULTAR': '<span class="badge bg-info">CONSULTAR</span>'
+                    'DESASIGNAR': '<span class="badge bg-warning">DESASIGNAR</span>'
                 };
                 return acciones[data] || data;
             }
@@ -440,45 +287,54 @@ const datatable = new DataTable('#TableHistorialActividades', {
     }
 });
 
-cargarUsuarios();
+document.addEventListener('DOMContentLoaded', function() {
+    cargarUsuarios();
 
-BtnBuscarActividades.addEventListener('click', MostrarTabla);
-BtnLimpiarFiltros.addEventListener('click', limpiarFiltros);
-
-if (BtnExportarReporte) {
-    BtnExportarReporte.addEventListener('click', exportarReporte);
-}
-
-if (BtnEstadisticas) {
-    BtnEstadisticas.addEventListener('click', mostrarEstadisticas);
-}
-
-SelectUsuario.addEventListener('change', () => {
-    if (seccionTabla.style.display !== 'none') {
-        BuscarActividades();
+    if (BtnBuscarActividades) {
+        BtnBuscarActividades.addEventListener('click', MostrarTabla);
     }
-});
-
-SelectModulo.addEventListener('change', () => {
-    if (seccionTabla.style.display !== 'none') {
-        BuscarActividades();
+    
+    if (BtnLimpiarFiltros) {
+        BtnLimpiarFiltros.addEventListener('click', limpiarFiltros);
     }
-});
 
-SelectAccion.addEventListener('change', () => {
-    if (seccionTabla.style.display !== 'none') {
-        BuscarActividades();
+    if (SelectUsuario) {
+        SelectUsuario.addEventListener('change', () => {
+            if (seccionTabla && seccionTabla.style.display !== 'none') {
+                BuscarActividades();
+            }
+        });
     }
-});
 
-InputFechaInicio.addEventListener('change', () => {
-    if (seccionTabla.style.display !== 'none') {
-        BuscarActividades();
+    if (SelectModulo) {
+        SelectModulo.addEventListener('change', () => {
+            if (seccionTabla && seccionTabla.style.display !== 'none') {
+                BuscarActividades();
+            }
+        });
     }
-});
 
-InputFechaFin.addEventListener('change', () => {
-    if (seccionTabla.style.display !== 'none') {
-        BuscarActividades();
+    if (SelectAccion) {
+        SelectAccion.addEventListener('change', () => {
+            if (seccionTabla && seccionTabla.style.display !== 'none') {
+                BuscarActividades();
+            }
+        });
+    }
+
+    if (InputFechaInicio) {
+        InputFechaInicio.addEventListener('change', () => {
+            if (seccionTabla && seccionTabla.style.display !== 'none') {
+                BuscarActividades();
+            }
+        });
+    }
+
+    if (InputFechaFin) {
+        InputFechaFin.addEventListener('change', () => {
+            if (seccionTabla && seccionTabla.style.display !== 'none') {
+                BuscarActividades();
+            }
+        });
     }
 });

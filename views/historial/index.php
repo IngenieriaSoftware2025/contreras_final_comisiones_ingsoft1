@@ -107,4 +107,4 @@
 </div>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<script src="<?= asset('build/js/historial/index.js') ?>"></script>
+<script src="/contreras_final_comisiones_ingsoft1/build/js/historial/index.js"></script>

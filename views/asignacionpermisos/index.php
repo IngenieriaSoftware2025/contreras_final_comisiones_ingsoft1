@@ -9,7 +9,6 @@
                     </div>
                     <form id="formAsignacionPermiso" class="p-4 bg-white rounded-3 shadow-sm border">
                         <input type="hidden" id="asignacion_id" name="asignacion_id">
-                        <input type="hidden" id="asignacion_fecha" name="asignacion_fecha" value="">
                         <input type="hidden" id="asignacion_situacion" name="asignacion_situacion" value="1">
                         
                         <div class="row g-4 mb-3">
@@ -35,9 +34,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="asignacion_usuario_asigno" class="form-label">Usuario que Asigna</label>
+                                <label for="asignacion_usuario_asigno" class="form-label">Administrador que Asigna</label>
                                 <select class="form-control form-control-lg" id="asignacion_usuario_asigno" name="asignacion_usuario_asigno" required>
-                                    <option value="">Seleccione quién asigna</option>
+                                    <option value="">Seleccione administrador que asigna</option>
                                 </select>
                             </div>
                         </div>
@@ -81,9 +80,8 @@
                                     <th>No.</th>
                                     <th>Usuario</th>
                                     <th>Aplicación</th>
-                                    <th>Permiso</th>
-                                    <th>Clave</th>
-                                    <th>Fecha Asignación</th>
+                                    <th>Tipo Permiso</th>
+                                    <th>Descripción</th>
                                     <th>Asignado por</th>
                                     <th>Motivo</th>
                                     <th>Situación</th>
@@ -98,6 +96,7 @@
             </div>
         </div>
     </div>
+</div>
     
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script src="<?= asset('build/js/asignacionpermisos/index.js') ?>"></script>

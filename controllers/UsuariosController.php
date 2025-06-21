@@ -6,6 +6,7 @@ use Exception;
 use MVC\Router;
 use Model\ActiveRecord;
 use Model\Usuarios;
+use Controllers\HistorialActController;
 
 class UsuariosController extends ActiveRecord
 {
@@ -142,11 +143,29 @@ class UsuariosController extends ActiveRecord
                 ]);
                 exit;
             }
+
+            $_POST['usuario_rol'] = trim(htmlspecialchars($_POST['usuario_rol']));
+            
+            if (empty($_POST['usuario_rol'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Debe seleccionar un rol'
+                ]);
+                exit;
+            }
+            
+            if ($_POST['usuario_rol'] !== 'administrador' && $_POST['usuario_rol'] !== 'usuario') {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'El rol debe ser administrador o usuario'
+                ]);
+                exit;
+            }
             
             $_POST['usuario_token'] = uniqid();
             $dpi = $_POST['usuario_dpi'];
-            $_POST['usuario_fecha_creacion'] = '';
-            $_POST['usuario_fecha_contra'] = '';
             
             if (isset($_FILES['usuario_fotografia']) && $_FILES['usuario_fotografia']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $file = $_FILES['usuario_fotografia'];
@@ -214,6 +233,10 @@ class UsuariosController extends ActiveRecord
             $resultado = $usuario->crear();
 
             if($resultado['resultado'] == 1){
+                $nombre_completo = $_POST['usuario_nom1'] . ' ' . $_POST['usuario_ape1'];
+                
+                HistorialActController::registrarActividad('USUARIOS', 'CREAR', 'Registró usuario: ' . $nombre_completo, 'usuarios/guardar');
+                
                 http_response_code(200);
                 echo json_encode([
                     'codigo' => 1,
@@ -243,21 +266,7 @@ class UsuariosController extends ActiveRecord
     public static function buscarAPI()
     {
         try {
-            $fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : null;
-            $fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : null;
-
-            $condiciones = ["usuario_situacion = 1"];
-
-            if ($fecha_inicio) {
-                $condiciones[] = "usuario_fecha_creacion >= '{$fecha_inicio}'";
-            }
-
-            if ($fecha_fin) {
-                $condiciones[] = "usuario_fecha_creacion <= '{$fecha_fin}'";
-            }
-
-            $where = implode(" AND ", $condiciones);
-            $sql = "SELECT * FROM macs_usuario WHERE $where ORDER BY usuario_fecha_creacion DESC";
+            $sql = "SELECT * FROM macs_usuario WHERE usuario_situacion = 1 ORDER BY usuario_fecha_creacion DESC";
             $data = self::fetchArray($sql);
 
             http_response_code(200);
@@ -366,6 +375,26 @@ class UsuariosController extends ActiveRecord
             return;
         }
 
+        $_POST['usuario_rol'] = trim(htmlspecialchars($_POST['usuario_rol']));
+        
+        if (empty($_POST['usuario_rol'])) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'Debe seleccionar un rol'
+            ]);
+            return;
+        }
+        
+        if ($_POST['usuario_rol'] !== 'administrador' && $_POST['usuario_rol'] !== 'usuario') {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'El rol debe ser administrador o usuario'
+            ]);
+            return;
+        }
+
         try {
             $verificarDpiExistente = self::fetchArray("SELECT usuario_id FROM macs_usuario WHERE usuario_dpi = '{$_POST['usuario_dpi']}' AND usuario_situacion = 1 AND usuario_id != {$id}");
 
@@ -397,10 +426,15 @@ class UsuariosController extends ActiveRecord
                     usuario_tel = '{$_POST['usuario_tel']}',
                     usuario_direc = '{$_POST['usuario_direc']}',
                     usuario_dpi = '{$_POST['usuario_dpi']}',
-                    usuario_correo = '{$_POST['usuario_correo']}'
+                    usuario_correo = '{$_POST['usuario_correo']}',
+                    usuario_rol = '{$_POST['usuario_rol']}'
                     WHERE usuario_id = {$id}";
             
             $resultado = self::SQL($sql);
+
+            $nombre_completo = $_POST['usuario_nom1'] . ' ' . $_POST['usuario_ape1'];
+            
+            HistorialActController::registrarActividad('USUARIOS', 'ACTUALIZAR', 'Modificó usuario: ' . $nombre_completo, 'usuarios/modificar');
 
             http_response_code(200);
             echo json_encode([
@@ -422,7 +456,17 @@ class UsuariosController extends ActiveRecord
     {
         try {
             $id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
+            
+            $sql_usuario = "SELECT usuario_nom1, usuario_ape1 FROM macs_usuario WHERE usuario_id = $id";
+            $usuario_data = self::fetchFirst($sql_usuario);
+            
             $ejecutar = Usuarios::EliminarUsuarios($id);
+
+            if ($usuario_data) {
+                $nombre_completo = $usuario_data['usuario_nom1'] . ' ' . $usuario_data['usuario_ape1'];
+                
+                HistorialActController::registrarActividad('USUARIOS', 'ELIMINAR', 'Eliminó usuario: ' . $nombre_completo, 'usuarios/eliminar');
+            }
 
             http_response_code(200);
             echo json_encode([

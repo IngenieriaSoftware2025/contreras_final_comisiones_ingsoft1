@@ -9,7 +9,6 @@
                     </div>
                     <form id="formComision" class="p-4 bg-white rounded-3 shadow-sm border">
                         <input type="hidden" id="comision_id" name="comision_id">
-                        <input type="hidden" id="comision_fecha_creacion" name="comision_fecha_creacion" value="">
                         <input type="hidden" id="comision_usuario_creo" name="comision_usuario_creo" value="">
                         <input type="hidden" id="comision_situacion" name="comision_situacion" value="1">
                         
@@ -19,11 +18,11 @@
                                 <input type="text" class="form-control form-control-lg" id="comision_titulo" name="comision_titulo" placeholder="Ingrese título de la comisión" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="comision_tipo" class="form-label">Tipo de Comisión</label>
-                                <select class="form-control form-control-lg" id="comision_tipo" name="comision_tipo" required>
-                                    <option value="">Seleccione el tipo</option>
-                                    <option value="TRANSMISIONES">TRANSMISIONES</option>
-                                    <option value="INFORMATICA">INFORMÁTICA</option>
+                                <label for="comision_comando" class="form-label">Comando que Pertenece</label>
+                                <select class="form-control form-control-lg" id="comision_comando" name="comision_comando" required>
+                                    <option value="">Seleccione el comando</option>
+                                    <option value="BRIGADA DE COMUNICACIONES">BRIGADA DE COMUNICACIONES</option>
+                                    <option value="INFORMATICA">INFORMATICA</option>
                                 </select>
                             </div>
                         </div>
@@ -77,6 +76,15 @@
                             </div>
                         </div>
                         
+                        <div class="row g-4 mb-3">
+                            <div class="col-md-12">
+                                <label for="personal_asignado_id" class="form-label w-100 text-center">Personal Asignado</label>
+                                <select class="form-control form-control-lg" id="personal_asignado_id" name="personal_asignado_id">
+                                    <option value="">Seleccione personal (opcional)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
                         <div class="d-flex justify-content-center gap-3">
                             <button class="btn btn-success btn-lg px-4 shadow" type="submit" id="BtnGuardar">
                                 <i class="bi bi-save me-2"></i>Guardar
@@ -108,11 +116,12 @@
                                 <tr>
                                     <th>No.</th>
                                     <th>Título</th>
-                                    <th>Tipo</th>
+                                    <th>Comando</th>
                                     <th>Fecha Inicio</th>
                                     <th>Duración</th>
                                     <th>Ubicación</th>
                                     <th>Estado</th>
+                                    <th>Personal Asignado</th>
                                     <th>Creado por</th>
                                     <th>Situación</th>
                                     <th>Acciones</th>

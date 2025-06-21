@@ -23,6 +23,7 @@ class Usuarios extends ActiveRecord {
         'usuario_fecha_creacion',
         'usuario_fecha_contra',
         'usuario_fotografia',
+        'usuario_rol',
         'usuario_situacion'
     ];
     
@@ -40,6 +41,7 @@ class Usuarios extends ActiveRecord {
     public $usuario_fecha_creacion;
     public $usuario_fecha_contra;
     public $usuario_fotografia;
+    public $usuario_rol;
     public $usuario_situacion;
     
     public function __construct($usuario = [])
@@ -58,6 +60,7 @@ class Usuarios extends ActiveRecord {
         $this->usuario_fecha_creacion = $usuario['usuario_fecha_creacion'] ?? '';
         $this->usuario_fecha_contra = $usuario['usuario_fecha_contra'] ?? '';
         $this->usuario_fotografia = $usuario['usuario_fotografia'] ?? null;
+        $this->usuario_rol = $usuario['usuario_rol'] ?? '';
         $this->usuario_situacion = $usuario['usuario_situacion'] ?? 1;
     }
 

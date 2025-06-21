@@ -12,7 +12,7 @@ class Comision extends ActiveRecord {
     [
         'comision_titulo',
         'comision_descripcion',
-        'comision_tipo',
+        'comision_comando',
         'comision_fecha_inicio',
         'comision_duracion',
         'comision_duracion_tipo',
@@ -22,13 +22,14 @@ class Comision extends ActiveRecord {
         'comision_estado',
         'comision_fecha_creacion',
         'comision_usuario_creo',
+        'personal_asignado_id',
         'comision_situacion'
     ];
     
     public $comision_id;
     public $comision_titulo;
     public $comision_descripcion;
-    public $comision_tipo;
+    public $comision_comando;
     public $comision_fecha_inicio;
     public $comision_duracion;
     public $comision_duracion_tipo;
@@ -38,6 +39,7 @@ class Comision extends ActiveRecord {
     public $comision_estado;
     public $comision_fecha_creacion;
     public $comision_usuario_creo;
+    public $personal_asignado_id;
     public $comision_situacion;
     
     public function __construct($comision = [])
@@ -45,7 +47,7 @@ class Comision extends ActiveRecord {
         $this->comision_id = $comision['comision_id'] ?? null;
         $this->comision_titulo = $comision['comision_titulo'] ?? '';
         $this->comision_descripcion = $comision['comision_descripcion'] ?? '';
-        $this->comision_tipo = $comision['comision_tipo'] ?? '';
+        $this->comision_comando = $comision['comision_comando'] ?? '';
         $this->comision_fecha_inicio = $comision['comision_fecha_inicio'] ?? '';
         $this->comision_duracion = $comision['comision_duracion'] ?? 0;
         $this->comision_duracion_tipo = $comision['comision_duracion_tipo'] ?? '';
@@ -55,6 +57,7 @@ class Comision extends ActiveRecord {
         $this->comision_estado = $comision['comision_estado'] ?? 'PROGRAMADA';
         $this->comision_fecha_creacion = $comision['comision_fecha_creacion'] ?? '';
         $this->comision_usuario_creo = $comision['comision_usuario_creo'] ?? 0;
+        $this->personal_asignado_id = $comision['personal_asignado_id'] ?? null;
         $this->comision_situacion = $comision['comision_situacion'] ?? 1;
     }
 

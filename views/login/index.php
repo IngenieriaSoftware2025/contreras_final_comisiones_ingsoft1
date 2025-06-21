@@ -21,8 +21,9 @@
                   <label class="form-label" for="usuario_contra">Contraseña</label>
                 </div>
 
-                <h5>usuario 3005134880101</h5>
-                <h5>contraseña martin2565</h5>
+                <p>Admin 3005134880101</p>
+                <p>usuario 3005134880303</p>
+                <p>contraseña martin1234</p>
 
                 <p class="small mb-5 pb-lg-2"><a class="text-white-50" href="#!">¿Olvidaste tu contraseña?</a></p>
 

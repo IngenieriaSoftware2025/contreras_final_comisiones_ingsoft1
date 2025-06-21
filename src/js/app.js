@@ -1,9 +1,10 @@
 import '../scss/app.scss';
 
 document.addEventListener('DOMContentLoaded', (e)=> {
-    const dropdown = document.querySelector('.dropdown-menu');
-    dropdown.style.margin = 0;
-
+    const dropdowns = document.querySelectorAll('.dropdown-menu');
+    dropdowns.forEach(dropdown => {
+        dropdown.style.margin = 0;
+    });
 
     let items = document.querySelectorAll('.nav-link')
     items.forEach(item => {
@@ -14,16 +15,11 @@ document.addEventListener('DOMContentLoaded', (e)=> {
             }
         }
     });
-
-
 })
-
-
 
 document.onreadystatechange = () => {
     switch (document.readyState) {
         case "loading":
-
             break;
         case "interactive": 
             document.getElementById('bar') ? document.getElementById('bar').style.width = '35%' : null;

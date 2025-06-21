@@ -10,8 +10,6 @@
                     <form id="formUsuario" class="p-4 bg-white rounded-3 shadow-sm border" enctype="multipart/form-data">
                         <input type="hidden" id="usuario_id" name="usuario_id">
                         <input type="hidden" id="usuario_token" name="usuario_token" value="">
-                        <input type="hidden" id="usuario_fecha_creacion" name="usuario_fecha_creacion" value="">
-                        <input type="hidden" id="usuario_fecha_contra" name="usuario_fecha_contra" value="">
                         <input type="hidden" id="usuario_situacion" name="usuario_situacion" value="1">
                         
                         <div class="row g-4 mb-3">
@@ -69,8 +67,16 @@
                             </div>
                         </div>
                         
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-12">
+                        <div class="row g-4 mb-3">
+                            <div class="col-md-6">
+                                <label for="usuario_rol" class="form-label">Rol</label>
+                                <select class="form-select form-select-lg" id="usuario_rol" name="usuario_rol" required>
+                                    <option value="">Seleccione un rol</option>
+                                    <option value="administrador">Administrador</option>
+                                    <option value="usuario">Usuario</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
                                 <label for="usuario_fotografia" class="form-label">Fotografía</label>
                                 <input type="file" class="form-control form-control-lg" id="usuario_fotografia" name="usuario_fotografia" accept=".jpg,.jpeg,.png">
                             </div>
@@ -114,6 +120,7 @@
                                     <th>Teléfono</th>
                                     <th>DPI</th>
                                     <th>Dirección</th>
+                                    <th>Rol</th>
                                     <th>Fotografía</th>
                                     <th>Situación</th>
                                     <th>Acciones</th>

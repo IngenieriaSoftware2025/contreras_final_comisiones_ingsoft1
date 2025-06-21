@@ -5,6 +5,7 @@ namespace Controllers;
 use Model\ActiveRecord;
 use MVC\Router;
 use Exception;
+use Controllers\HistorialActController;
 
 class LoginController extends ActiveRecord
 {
@@ -21,7 +22,7 @@ class LoginController extends ActiveRecord
             $dpi = htmlspecialchars($_POST['usuario_dpi']);
             $contrasena = htmlspecialchars($_POST['usuario_contra']);
 
-            $queryExisteUser = "SELECT usuario_id, usuario_nom1, usuario_nom2, usuario_ape1, usuario_ape2, usuario_contra FROM macs_usuario WHERE usuario_dpi = '$dpi' AND usuario_situacion = 1";
+            $queryExisteUser = "SELECT usuario_id, usuario_nom1, usuario_nom2, usuario_ape1, usuario_ape2, usuario_contra, usuario_rol FROM macs_usuario WHERE usuario_dpi = '$dpi' AND usuario_situacion = 1";
 
             $existeUsuario = ActiveRecord::fetchArray($queryExisteUser)[0];
 
@@ -39,11 +40,14 @@ class LoginController extends ActiveRecord
                     $_SESSION['user'] = $nombreUser;
                     $_SESSION['dpi'] = $dpi;
                     $_SESSION['usuario_id'] = $usuarioId;
-                    $_SESSION['rol'] = 'USUARIO';
+                    $_SESSION['rol'] = $existeUsuario['usuario_rol'];
+
+                    HistorialActController::registrarActividad('LOGIN', 'INICIAR_SESION', 'Inició sesión en el sistema', 'login');
 
                     echo json_encode([
                         'codigo' => 1,
                         'mensaje' => 'Usuario iniciado exitosamente',
+                        'rol' => $existeUsuario['usuario_rol']
                     ]);
                 } else {
                     echo json_encode([
@@ -80,6 +84,10 @@ class LoginController extends ActiveRecord
 
     public static function logout(){
         session_start();
+        
+        if (isset($_SESSION['usuario_id'])) {
+            HistorialActController::registrarActividad('LOGIN', 'CERRAR_SESION', 'Cerró sesión del sistema', 'logout');
+        }
         
         $_SESSION = [];
         session_destroy();

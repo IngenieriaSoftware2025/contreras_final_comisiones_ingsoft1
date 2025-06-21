@@ -16,7 +16,7 @@ const guardarAplicacion = async e => {
     e.preventDefault();
     BtnGuardar.disabled = true;
 
-    if (!validarFormulario(formAplicacion, ['app_id', 'app_fecha_creacion', 'app_situacion'])) {
+    if (!validarFormulario(formAplicacion, ['app_id', 'app_situacion'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -158,7 +158,7 @@ const datatable = new DataTable('#TableAplicaciones', {
         {
             title: 'Acciones',
             data: 'app_id',
-            width: '5%',
+            width: '10%',
             searchable: false,
             orderable: false,
             render: (data, type, row, meta) => {
@@ -209,7 +209,7 @@ const ModificarAplicacion = async (event) => {
     event.preventDefault();
     BtnModificar.disabled = true;
 
-    if (!validarFormulario(formAplicacion, ['app_id', 'app_fecha_creacion', 'app_situacion'])) {
+    if (!validarFormulario(formAplicacion, ['app_id', 'app_situacion'])) {
         Swal.fire({
             position: "center",
             icon: "info",

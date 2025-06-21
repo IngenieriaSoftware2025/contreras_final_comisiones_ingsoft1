@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="build/js/app.js"></script>
+    <script src="<?= asset('build/js/app.js') ?>"></script>
     <link rel="shortcut icon" href="<?= asset('images/cit.png') ?>" type="image/x-icon">
     <link rel="stylesheet" href="<?= asset('build/styles.css') ?>">
     <title>Brigada de Comunicaciones</title>
@@ -18,7 +18,7 @@
             </button>
             <a class="navbar-brand" href="/contreras_final_comisiones_ingsoft1/inicio">
                 <img src="<?= asset('./images/cit.png') ?>" width="35px'" alt="cit" >
-                Brigada de Comunicaciones
+                MACS
             </a>
             <div class="collapse navbar-collapse" id="navbarToggler">
                 
@@ -28,26 +28,8 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link px-3" style="border: none; background: none;" href="/contreras_final_comisiones_ingsoft1/usuarios">
-                            <i class="bi bi-people-fill me-2"></i>Usuarios
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link px-3" style="background: none;" href="/contreras_final_comisiones_ingsoft1/aplicacion">
-                            <i class="bi bi-grid-fill me-2"></i>Aplicaciones
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link px-3" style="background: none; border: none;" href="/contreras_final_comisiones_ingsoft1/permisos">
-                            <i class="bi bi-shield-lock-fill me-2"></i>Permisos
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link px-3" style="background: none; border: none;" href="/contreras_final_comisiones_ingsoft1/asignacionpermisos">
-                            <i class="bi bi-shield-check-fill me-2"></i>Asignación de Permisos
+                        <a class="nav-link px-3" style="background: none;" href="/contreras_final_comisiones_ingsoft1/comisionpersonal">
+                            <i class="bi bi-person-plus-fill me-2"></i>Personal Comisiones
                         </a>
                     </li>
                     
@@ -57,26 +39,46 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link px-3" style="background: none;" href="/contreras_final_comisiones_ingsoft1/comisionpersonal">
-                            <i class="bi bi-person-plus-fill me-2"></i>Asignar Personal
-                        </a>
-                    </li>
-
-                    <div class="nav-item dropdown " >
+                    <div class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class="bi bi-gear me-2"></i>Reportes
+                            <i class="bi bi-gear me-2"></i>Gestión de Permisos
                         </a>
-                        <ul class="dropdown-menu  dropdown-menu-dark "id="dropwdownRevision" style="margin: 0;">
+                        <ul class="dropdown-menu dropdown-menu-dark" id="dropdownPermisos" style="margin: 0;">
                             <li>
-                                <a class="dropdown-item nav-link text-white " href="/contreras_final_comisiones_ingsoft1/estadisticas"><i class="ms-lg-0 ms-2 bi bi-bar-chart-fill me-2"></i>Estadísticas</a>
+                                <a class="dropdown-item nav-link text-white" href="/contreras_final_comisiones_ingsoft1/aplicacion"><i class="bi bi-app-indicator me-2"></i>Aplicaciones</a>
                             </li>
                             <li>
-                                <a class="dropdown-item nav-link text-white " href="/contreras_final_comisiones_ingsoft1/mapa"><i class="ms-lg-0 ms-2 bi bi-geo-alt-fill me-2"></i>Mapa</a>
+                                <a class="dropdown-item nav-link text-white" href="/contreras_final_comisiones_ingsoft1/permisos"><i class="bi bi-shield-lock-fill me-2"></i>Permisos</a>
+                            </li>
+                            <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador'): ?>
+                            <li>
+                                <a class="dropdown-item nav-link text-white" href="/contreras_final_comisiones_ingsoft1/asignacionpermisos"><i class="bi bi-key-fill me-2"></i>Asignación Permisos</a>
                             </li>
                             <li>
-                                <a class="dropdown-item nav-link text-white " href="/contreras_final_comisiones_ingsoft1/historial"><i class="ms-lg-0 ms-2 bi bi-clock-history me-2"></i>Historial de Actividades</a>
+                                <a class="dropdown-item nav-link text-white" href="/contreras_final_comisiones_ingsoft1/usuarios"><i class="bi bi-person-plus me-2"></i>Crear Usuarios</a>
                             </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div> 
+
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-gear me-2"></i>Registros
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" id="dropdownRegistros" style="margin: 0;">
+                            <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador'): ?>
+                            <li>
+                                <a class="dropdown-item nav-link text-white" href="/contreras_final_comisiones_ingsoft1/estadisticas"><i class="bi bi-bar-chart-fill me-2"></i>Estadísticas</a>
+                            </li>
+                            <?php endif; ?>
+                            <li>
+                                <a class="dropdown-item nav-link text-white" href="/contreras_final_comisiones_ingsoft1/mapa"><i class="bi bi-map-fill me-2"></i>Mapa</a>
+                            </li>
+                            <?php if(isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador'): ?>
+                            <li>
+                                <a class="dropdown-item nav-link text-white" href="/contreras_final_comisiones_ingsoft1/historial"><i class="bi bi-clock-history me-2"></i>Historial Actividad</a>
+                            </li>
+                            <?php endif; ?>
                         </ul>
                     </div> 
 
@@ -88,7 +90,12 @@
                     <div class="d-flex align-items-center me-3">
                         <span class="text-white me-3">
                             <i class="bi bi-person-circle me-1"></i>
-                            <?= $_SESSION['user'] ?> (<?= $_SESSION['rol'] ?>)
+                            <?= $_SESSION['user'] ?> 
+                            <?php if($_SESSION['rol'] === 'administrador'): ?>
+                                <span class="badge bg-success ms-1">ADMIN</span>
+                            <?php else: ?>
+                                <span class="badge bg-primary ms-1">USUARIO</span>
+                            <?php endif; ?>
                         </span>
                     </div>
                     <div class="col-lg-2 d-grid mb-lg-0 mb-2">

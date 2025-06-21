@@ -14,6 +14,27 @@ const InputUsuarioTel = document.getElementById('usuario_tel');
 const InputUsuarioDpi = document.getElementById('usuario_dpi');
 const seccionTabla = document.getElementById('seccionTabla');
 
+const validarPermisoAccion = async (modulo, accion) => {
+    try {
+        const response = await fetch(`/contreras_final_comisiones_ingsoft1/API/verificarPermisos?modulo=${modulo}&accion=${accion}`);
+        const data = await response.json();
+        if (!data.permitido) {
+            Swal.fire({
+                position: "center",
+                icon: "warning",
+                title: "Sin permisos",
+                text: `No tienes permisos para ${accion} usuarios`,
+                showConfirmButton: true,
+            });
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+
 const ValidarTelefono = () => {
     const CantidadDigitos = InputUsuarioTel.value;
 
@@ -64,9 +85,10 @@ const ValidarDpi = () => {
 
 const guardarUsuario = async e => {
     e.preventDefault();
+    if (!await validarPermisoAccion('USUARIOS', 'crear')) return;
     BtnGuardar.disabled = true;
 
-    if (!validarFormulario(formUsuario, ['usuario_id', 'usuario_token', 'usuario_fecha_creacion', 'usuario_fecha_contra', 'usuario_situacion', 'usuario_fotografia'])) {
+    if (!validarFormulario(formUsuario, ['usuario_id', 'usuario_token', 'usuario_situacion', 'usuario_fotografia'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -223,6 +245,16 @@ const datatable = new DataTable('#TableUsuarios', {
             width: '12%'
         },
         {
+            title: 'Rol',
+            data: 'usuario_rol',
+            width: '8%',
+            render: (data, type, row) => {
+                return data === 'administrador' ? 
+                    '<span class="badge bg-danger">ADMINISTRADOR</span>' : 
+                    '<span class="badge bg-success">USUARIO</span>';
+            }
+        },
+        {
             title: 'Fotografía',
             data: 'usuario_fotografia',
             width: '8%',
@@ -247,7 +279,7 @@ const datatable = new DataTable('#TableUsuarios', {
         {
             title: 'Acciones',
             data: 'usuario_id',
-            width: '5%',
+            width: '10%',
             searchable: false,
             orderable: false,
             render: (data, type, row, meta) => {
@@ -263,6 +295,7 @@ const datatable = new DataTable('#TableUsuarios', {
                          data-dpi="${row.usuario_dpi || ''}"  
                          data-direc="${row.usuario_direc || ''}"  
                          data-correo="${row.usuario_correo || ''}"
+                         data-rol="${row.usuario_rol || ''}"
                          title="Modificar">
                          <i class='bi bi-pencil-square me-1'></i> Modificar
                      </button>
@@ -289,6 +322,7 @@ const llenarFormulario = (event) => {
     document.getElementById('usuario_dpi').value = datos.dpi;
     document.getElementById('usuario_direc').value = datos.direc;
     document.getElementById('usuario_correo').value = datos.correo;
+    document.getElementById('usuario_rol').value = datos.rol;
 
     BtnGuardar.classList.add('d-none');
     BtnModificar.classList.remove('d-none');
@@ -306,9 +340,10 @@ const limpiarTodo = () => {
 
 const ModificarUsuario = async (event) => {
     event.preventDefault();
+    if (!await validarPermisoAccion('USUARIOS', 'modificar')) return;
     BtnModificar.disabled = true;
 
-    if (!validarFormulario(formUsuario, ['usuario_id', 'usuario_token', 'usuario_fecha_creacion', 'usuario_fecha_contra', 'usuario_situacion', 'usuario_fotografia', 'confirmar_contra'])) {
+    if (!validarFormulario(formUsuario, ['usuario_id', 'usuario_token', 'usuario_situacion', 'usuario_fotografia', 'confirmar_contra'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -360,6 +395,7 @@ const ModificarUsuario = async (event) => {
 }
 
 const EliminarUsuarios = async (e) => {
+    if (!await validarPermisoAccion('USUARIOS', 'eliminar')) return;
     const idUsuario = e.currentTarget.dataset.id;
 
     const AlertaConfirmarEliminar = await Swal.fire({

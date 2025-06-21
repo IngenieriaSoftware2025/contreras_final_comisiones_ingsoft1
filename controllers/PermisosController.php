@@ -6,6 +6,7 @@ use Exception;
 use MVC\Router;
 use Model\ActiveRecord;
 use Model\Permisos;
+use Controllers\HistorialActController;
 
 class PermisosController extends ActiveRecord
 {
@@ -20,39 +21,34 @@ class PermisosController extends ActiveRecord
         getHeadersApi();
     
         try {
-            $_POST['permiso_nombre'] = ucwords(strtolower(trim(htmlspecialchars($_POST['permiso_nombre']))));
+            $_POST['app_id'] = filter_var($_POST['app_id'], FILTER_SANITIZE_NUMBER_INT);
             
-            $cantidad_nombre = strlen($_POST['permiso_nombre']);
-            
-            if ($cantidad_nombre < 2) {
+            if ($_POST['app_id'] <= 0) {
                 http_response_code(400);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Nombre del permiso debe de tener mas de 1 caracteres'
-                ]);
-                exit;
-            }
-            
-            $_POST['permiso_clave'] = strtolower(trim(htmlspecialchars($_POST['permiso_clave'])));
-            
-            $cantidad_clave = strlen($_POST['permiso_clave']);
-            
-            if ($cantidad_clave < 2) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Clave del permiso debe de tener mas de 1 caracteres'
+                    'mensaje' => 'Debe seleccionar una aplicación válida'
                 ]);
                 exit;
             }
 
-            $verificarClaveExistente = self::fetchArray("SELECT permiso_id FROM macs_permiso WHERE permiso_clave = '{$_POST['permiso_clave']}' AND permiso_situacion = 1");
-
-            if (count($verificarClaveExistente) > 0) {
+            $_POST['permiso_tipo'] = trim(htmlspecialchars($_POST['permiso_tipo']));
+            
+            if (empty($_POST['permiso_tipo'])) {
                 http_response_code(400);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Ya existe un permiso con esta clave'
+                    'mensaje' => 'Debe seleccionar un tipo de permiso'
+                ]);
+                exit;
+            }
+            
+            $tipos_validos = ['LECTURA', 'ESCRITURA', 'MODIFICACION', 'ELIMINACION', 'REPORTE'];
+            if (!in_array($_POST['permiso_tipo'], $tipos_validos)) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'El tipo de permiso no es válido'
                 ]);
                 exit;
             }
@@ -69,48 +65,29 @@ class PermisosController extends ActiveRecord
                 ]);
                 exit;
             }
-            
-            $_POST['app_id'] = filter_var($_POST['app_id'], FILTER_SANITIZE_NUMBER_INT);
-            
-            if ($_POST['app_id'] <= 0) {
+
+            $verificarPermisoExistente = self::fetchArray("SELECT permiso_id FROM macs_permiso WHERE app_id = '{$_POST['app_id']}' AND permiso_tipo = '{$_POST['permiso_tipo']}' AND permiso_situacion = 1");
+
+            if (count($verificarPermisoExistente) > 0) {
                 http_response_code(400);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Debe seleccionar una aplicación válida'
+                    'mensaje' => 'Ya existe un permiso de este tipo para esta aplicación'
                 ]);
                 exit;
             }
 
-            $_POST['usuario_id'] = filter_var($_POST['usuario_id'], FILTER_SANITIZE_NUMBER_INT);
-            
-            if ($_POST['usuario_id'] <= 0) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Debe seleccionar un usuario válido'
-                ]);
-                exit;
-            }
-
-            $_POST['permiso_usuario_asigno'] = filter_var($_POST['permiso_usuario_asigno'], FILTER_SANITIZE_NUMBER_INT);
-            
-            if ($_POST['permiso_usuario_asigno'] <= 0) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Debe especificar quién asigna el permiso'
-                ]);
-                exit;
-            }
-
-            $_POST['permiso_motivo'] = trim(htmlspecialchars($_POST['permiso_motivo']));
-            $_POST['permiso_tipo'] = trim(htmlspecialchars($_POST['permiso_tipo'])) ?: 'FUNCIONAL';
-            $_POST['permiso_fecha'] = '';
+            $sql_app = "SELECT app_nombre_corto FROM macs_aplicacion WHERE app_id = {$_POST['app_id']}";
+            $app_data = self::fetchFirst($sql_app);
             
             $permiso = new Permisos($_POST);
             $resultado = $permiso->crear();
 
             if($resultado['resultado'] == 1){
+                $descripcion = "Creó permiso {$_POST['permiso_tipo']} para aplicación {$app_data['app_nombre_corto']}";
+                
+                HistorialActController::registrarActividad('PERMISOS', 'CREAR', $descripcion, 'permisos/guardar');
+                
                 http_response_code(200);
                 echo json_encode([
                     'codigo' => 1,
@@ -140,38 +117,13 @@ class PermisosController extends ActiveRecord
     public static function buscarAPI()
     {
         try {
-            $app_id = isset($_GET['app_id']) ? $_GET['app_id'] : null;
-            $usuario_id = isset($_GET['usuario_id']) ? $_GET['usuario_id'] : null;
-            $permiso_tipo = isset($_GET['permiso_tipo']) ? $_GET['permiso_tipo'] : null;
-
-            $condiciones = ["p.permiso_situacion = 1"];
-
-            if ($app_id) {
-                $condiciones[] = "p.app_id = {$app_id}";
-            }
-
-            if ($usuario_id) {
-                $condiciones[] = "p.usuario_id = {$usuario_id}";
-            }
-
-            if ($permiso_tipo) {
-                $condiciones[] = "p.permiso_tipo = '{$permiso_tipo}'";
-            }
-
-            $where = implode(" AND ", $condiciones);
             $sql = "SELECT 
                         p.*,
-                        a.app_nombre_corto,
-                        u.usuario_nom1,
-                        u.usuario_ape1,
-                        ua.usuario_nom1 as asigno_nom1,
-                        ua.usuario_ape1 as asigno_ape1
+                        a.app_nombre_corto
                     FROM macs_permiso p 
                     INNER JOIN macs_aplicacion a ON p.app_id = a.app_id 
-                    INNER JOIN macs_usuario u ON p.usuario_id = u.usuario_id
-                    INNER JOIN macs_usuario ua ON p.permiso_usuario_asigno = ua.usuario_id
-                    WHERE $where 
-                    ORDER BY p.permiso_fecha DESC";
+                    WHERE p.permiso_situacion = 1 
+                    ORDER BY a.app_nombre_corto, p.permiso_tipo";
             $data = self::fetchArray($sql);
 
             http_response_code(200);
@@ -196,28 +148,35 @@ class PermisosController extends ActiveRecord
         getHeadersApi();
 
         $id = $_POST['permiso_id'];
-        $_POST['permiso_nombre'] = ucwords(strtolower(trim(htmlspecialchars($_POST['permiso_nombre']))));
-
-        $cantidad_nombre = strlen($_POST['permiso_nombre']);
-
-        if ($cantidad_nombre < 2) {
+        
+        $_POST['app_id'] = filter_var($_POST['app_id'], FILTER_SANITIZE_NUMBER_INT);
+        
+        if ($_POST['app_id'] <= 0) {
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
-                'mensaje' => 'Nombre del permiso debe de tener mas de 1 caracteres'
+                'mensaje' => 'Debe seleccionar una aplicación válida'
             ]);
             return;
         }
 
-        $_POST['permiso_clave'] = strtolower(trim(htmlspecialchars($_POST['permiso_clave'])));
-
-        $cantidad_clave = strlen($_POST['permiso_clave']);
-
-        if ($cantidad_clave < 2) {
+        $_POST['permiso_tipo'] = trim(htmlspecialchars($_POST['permiso_tipo']));
+        
+        if (empty($_POST['permiso_tipo'])) {
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
-                'mensaje' => 'Clave del permiso debe de tener mas de 1 caracteres' 
+                'mensaje' => 'Debe seleccionar un tipo de permiso'
+            ]);
+            return;
+        }
+        
+        $tipos_validos = ['LECTURA', 'ESCRITURA', 'MODIFICACION', 'ELIMINACION', 'REPORTE'];
+        if (!in_array($_POST['permiso_tipo'], $tipos_validos)) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'El tipo de permiso no es válido'
             ]);
             return;
         }
@@ -235,58 +194,39 @@ class PermisosController extends ActiveRecord
             return;
         }
 
-        $_POST['app_id'] = filter_var($_POST['app_id'], FILTER_SANITIZE_NUMBER_INT);
-
-        if ($_POST['app_id'] <= 0) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Debe seleccionar una aplicación válida'
-            ]);
-            return;
-        }
-
-        $_POST['usuario_id'] = filter_var($_POST['usuario_id'], FILTER_SANITIZE_NUMBER_INT);
-
-        if ($_POST['usuario_id'] <= 0) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Debe seleccionar un usuario válido'
-            ]);
-            return;
-        }
-
         try {
-            $verificarClaveExistente = self::fetchArray("SELECT permiso_id FROM macs_permiso WHERE permiso_clave = '{$_POST['permiso_clave']}' AND permiso_situacion = 1 AND permiso_id != {$id}");
+            $verificarPermisoExistente = self::fetchArray("SELECT permiso_id FROM macs_permiso WHERE app_id = '{$_POST['app_id']}' AND permiso_tipo = '{$_POST['permiso_tipo']}' AND permiso_situacion = 1 AND permiso_id != {$id}");
 
-            if (count($verificarClaveExistente) > 0) {
+            if (count($verificarPermisoExistente) > 0) {
                 http_response_code(400);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Ya existe otro permiso con esta clave'
+                    'mensaje' => 'Ya existe otro permiso de este tipo para esta aplicación'
                 ]);
                 return;
             }
 
-            $data = Permisos::find($id);
-            $data->sincronizar([
-                'usuario_id' => $_POST['usuario_id'],
-                'app_id' => $_POST['app_id'],
-                'permiso_nombre' => $_POST['permiso_nombre'],
-                'permiso_clave' => $_POST['permiso_clave'],
-                'permiso_desc' => $_POST['permiso_desc'],
-                'permiso_tipo' => $_POST['permiso_tipo'] ?? 'FUNCIONAL',
-                'permiso_motivo' => $_POST['permiso_motivo'] ?? '',
-                'permiso_situacion' => 1
-            ]);
-            $data->actualizar();
+            $sql_app = "SELECT app_nombre_corto FROM macs_aplicacion WHERE app_id = {$_POST['app_id']}";
+            $app_data = self::fetchFirst($sql_app);
+
+            $sql = "UPDATE macs_permiso SET 
+                    app_id = '{$_POST['app_id']}',
+                    permiso_tipo = '{$_POST['permiso_tipo']}',
+                    permiso_desc = '{$_POST['permiso_desc']}'
+                    WHERE permiso_id = {$id}";
+            
+            $resultado = self::SQL($sql);
+
+            $descripcion = "Modificó permiso {$_POST['permiso_tipo']} para aplicación {$app_data['app_nombre_corto']}";
+            
+            HistorialActController::registrarActividad('PERMISOS', 'ACTUALIZAR', $descripcion, 'permisos/modificar');
 
             http_response_code(200);
             echo json_encode([
                 'codigo' => 1,
                 'mensaje' => 'La información del permiso ha sido modificada exitosamente'
             ]);
+            
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode([
@@ -301,7 +241,31 @@ class PermisosController extends ActiveRecord
     {
         try {
             $id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
+            
+            $verificarAsignaciones = self::fetchArray("SELECT asignacion_id FROM macs_asig_permisos WHERE asignacion_permiso_id = {$id} AND asignacion_situacion = 1");
+
+            if (count($verificarAsignaciones) > 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'No se puede eliminar el permiso porque está asignado a usuarios'
+                ]);
+                return;
+            }
+
+            $sql_permiso = "SELECT p.permiso_tipo, a.app_nombre_corto 
+                           FROM macs_permiso p 
+                           INNER JOIN macs_aplicacion a ON p.app_id = a.app_id 
+                           WHERE p.permiso_id = $id";
+            $permiso_data = self::fetchFirst($sql_permiso);
+            
             $ejecutar = Permisos::EliminarPermiso($id);
+
+            if ($permiso_data) {
+                $descripcion = "Eliminó permiso {$permiso_data['permiso_tipo']} de aplicación {$permiso_data['app_nombre_corto']}";
+                
+                HistorialActController::registrarActividad('PERMISOS', 'ELIMINAR', $descripcion, 'permisos/eliminar');
+            }
 
             http_response_code(200);
             echo json_encode([
@@ -336,60 +300,6 @@ class PermisosController extends ActiveRecord
             echo json_encode([
                 'codigo' => 0,
                 'mensaje' => 'Error al obtener las aplicaciones',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarUsuariosAPI()
-    {
-        try {
-            $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1 
-                    FROM macs_usuario 
-                    WHERE usuario_situacion = 1 
-                    ORDER BY usuario_nom1";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Usuarios obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los usuarios',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarTiposPermisosAPI()
-    {
-        try {
-            $tipos = [
-                ['tipo' => 'FUNCIONAL', 'descripcion' => 'Permisos para funcionalidades del sistema'],
-                ['tipo' => 'ADMINISTRATIVO', 'descripcion' => 'Permisos administrativos del sistema'],
-                ['tipo' => 'LECTURA', 'descripcion' => 'Permisos de solo lectura'],
-                ['tipo' => 'ESCRITURA', 'descripcion' => 'Permisos de escritura y modificación'],
-                ['tipo' => 'ELIMINACION', 'descripcion' => 'Permisos para eliminar registros']
-            ];
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Tipos de permisos obtenidos correctamente',
-                'data' => $tipos
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los tipos de permisos',
                 'detalle' => $e->getMessage(),
             ]);
         }

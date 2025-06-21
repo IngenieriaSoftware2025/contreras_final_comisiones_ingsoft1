@@ -6,6 +6,7 @@ use Exception;
 use MVC\Router;
 use Model\ActiveRecord;
 use Model\ComisionPersonal;
+use Controllers\HistorialActController;
 
 class ComisionPersonalController extends ActiveRecord
 {
@@ -20,88 +21,153 @@ class ComisionPersonalController extends ActiveRecord
         getHeadersApi();
     
         try {
-            $_POST['comision_id'] = filter_var($_POST['comision_id'], FILTER_SANITIZE_NUMBER_INT);
+            $_POST['personal_nom1'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_nom1']))));
             
-            if ($_POST['comision_id'] <= 0) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Debe seleccionar una comisión válida'
-                ]);
-                exit;
-            }
-
-            $_POST['usuario_id'] = filter_var($_POST['usuario_id'], FILTER_SANITIZE_NUMBER_INT);
+            $cantidad_nombre = strlen($_POST['personal_nom1']);
             
-            if ($_POST['usuario_id'] <= 0) {
+            if ($cantidad_nombre < 2) {
                 http_response_code(400);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Debe seleccionar un usuario válido'
+                    'mensaje' => 'Primer nombre debe de tener mas de 1 caracteres'
                 ]);
                 exit;
             }
-
-            $_POST['comision_personal_usuario_asigno'] = filter_var($_POST['comision_personal_usuario_asigno'], FILTER_SANITIZE_NUMBER_INT);
             
-            if ($_POST['comision_personal_usuario_asigno'] <= 0) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Debe especificar quién asigna al personal'
-                ]);
-                exit;
-            }
-
-            $verificarComisionActiva = self::fetchArray("SELECT c.comision_id FROM macs_comision c 
-                                                       INNER JOIN macs_comision_personal cp ON c.comision_id = cp.comision_id 
-                                                       WHERE cp.usuario_id = {$_POST['usuario_id']} 
-                                                       AND c.comision_estado IN ('PROGRAMADA', 'EN_CURSO') 
-                                                       AND cp.comision_personal_situacion = 1 
-                                                       AND c.comision_situacion = 1");
-
-            if (count($verificarComisionActiva) > 0) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Este usuario ya tiene una comisión activa asignada'
-                ]);
-                exit;
-            }
-
-            $verificarDuplicado = self::fetchArray("SELECT comision_personal_id FROM macs_comision_personal 
-                                                   WHERE comision_id = {$_POST['comision_id']} 
-                                                   AND usuario_id = {$_POST['usuario_id']} 
-                                                   AND comision_personal_situacion = 1");
-
-            if (count($verificarDuplicado) > 0) {
-                http_response_code(400);
-                echo json_encode([
-                    'codigo' => 0,
-                    'mensaje' => 'Este usuario ya está asignado a esta comisión'
-                ]);
-                exit;
-            }
-
-            $_POST['comision_personal_observaciones'] = trim(htmlspecialchars($_POST['comision_personal_observaciones']));
-            $_POST['comision_personal_fecha_asignacion'] = '';
-            $_POST['comision_personal_situacion'] = 1;
+            $_POST['personal_nom2'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_nom2']))));
             
-            $comisionPersonal = new ComisionPersonal($_POST);
-            $resultado = $comisionPersonal->crear();
+            $cantidad_nombre = strlen($_POST['personal_nom2']);
+            
+            if ($cantidad_nombre < 2) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Segundo nombre debe de tener mas de 1 caracteres'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_ape1'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_ape1']))));
+            $cantidad_apellido = strlen($_POST['personal_ape1']);
+            
+            if ($cantidad_apellido < 2) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Primer apellido debe de tener mas de 1 caracteres'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_ape2'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_ape2']))));
+            $cantidad_apellido = strlen($_POST['personal_ape2']);
+            
+            if ($cantidad_apellido < 2) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Segundo apellido debe de tener mas de 1 caracteres'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_tel'] = filter_var($_POST['personal_tel'], FILTER_SANITIZE_NUMBER_INT);
+            if (strlen($_POST['personal_tel']) != 8) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'El telefono debe de tener 8 numeros'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_dpi'] = trim(htmlspecialchars($_POST['personal_dpi']));
+            if (strlen($_POST['personal_dpi']) != 13) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'La cantidad de digitos del DPI debe de ser igual a 13'
+                ]);
+                exit;
+            }
+
+            $verificarDpiExistente = self::fetchArray("SELECT personal_id FROM macs_personal_comisiones WHERE personal_dpi = '{$_POST['personal_dpi']}' AND personal_situacion = 1");
+
+            if (count($verificarDpiExistente) > 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Ya existe un personal registrado con este DPI'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_correo'] = filter_var($_POST['personal_correo'], FILTER_SANITIZE_EMAIL);
+            
+            if (!filter_var($_POST['personal_correo'], FILTER_VALIDATE_EMAIL)){
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'El correo electronico no es valido'
+                ]);
+                exit;
+            }
+
+            $verificarCorreoExistente = self::fetchArray("SELECT personal_id FROM macs_personal_comisiones WHERE personal_correo = '{$_POST['personal_correo']}' AND personal_situacion = 1");
+
+            if (count($verificarCorreoExistente) > 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'Ya existe un personal registrado con este correo electrónico'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_direccion'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_direccion']))));
+            $_POST['personal_rango'] = strtoupper(trim(htmlspecialchars($_POST['personal_rango'])));
+            
+            if (!in_array($_POST['personal_rango'], ['OFICIAL', 'ESPECIALISTA', 'TROPA', 'PLANILLERO'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'El rango debe ser OFICIAL, ESPECIALISTA, TROPA o PLANILLERO'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_unidad'] = strtoupper(trim(htmlspecialchars($_POST['personal_unidad'])));
+            
+            if (!in_array($_POST['personal_unidad'], ['BRIGADA DE COMUNICACIONES', 'INFORMATICA'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'codigo' => 0,
+                    'mensaje' => 'La unidad debe ser BRIGADA DE COMUNICACIONES o INFORMATICA'
+                ]);
+                exit;
+            }
+            
+            $_POST['personal_situacion'] = 1;
+            
+            $personal = new ComisionPersonal($_POST);
+            $resultado = $personal->crear();
 
             if($resultado['resultado'] == 1){
+                $nombre_completo = $_POST['personal_nom1'] . ' ' . $_POST['personal_ape1'];
+                
+                HistorialActController::registrarActividad('COMISION_PERSONAL', 'CREAR', 'Registró personal: ' . $nombre_completo, 'comisionpersonal/guardar');
+                
                 http_response_code(200);
                 echo json_encode([
                     'codigo' => 1,
-                    'mensaje' => 'Personal asignado a la comisión correctamente',
+                    'mensaje' => 'Personal registrado correctamente',
                 ]);
                 exit;
             } else {
                 http_response_code(500);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Error al asignar personal a la comisión',
+                    'mensaje' => 'Error en registrar al personal',
                 ]);
                 exit;
             }
@@ -120,43 +186,13 @@ class ComisionPersonalController extends ActiveRecord
     public static function buscarAPI()
     {
         try {
-            $comision_id = isset($_GET['comision_id']) ? $_GET['comision_id'] : null;
-            $usuario_id = isset($_GET['usuario_id']) ? $_GET['usuario_id'] : null;
-
-            $condiciones = ["cp.comision_personal_situacion = 1"];
-
-            if ($comision_id) {
-                $condiciones[] = "cp.comision_id = {$comision_id}";
-            }
-
-            if ($usuario_id) {
-                $condiciones[] = "cp.usuario_id = {$usuario_id}";
-            }
-
-            $where = implode(" AND ", $condiciones);
-            $sql = "SELECT 
-                        cp.*,
-                        u.usuario_nom1,
-                        u.usuario_ape1,
-                        c.comision_titulo,
-                        c.comision_tipo,
-                        c.comision_estado,
-                        c.comision_fecha_inicio,
-                        c.comision_fecha_fin,
-                        ua.usuario_nom1 as asigno_nom1,
-                        ua.usuario_ape1 as asigno_ape1
-                    FROM macs_comision_personal cp 
-                    INNER JOIN macs_usuario u ON cp.usuario_id = u.usuario_id
-                    INNER JOIN macs_comision c ON cp.comision_id = c.comision_id 
-                    INNER JOIN macs_usuario ua ON cp.comision_personal_usuario_asigno = ua.usuario_id
-                    WHERE $where 
-                    ORDER BY cp.comision_personal_fecha_asignacion DESC";
+            $sql = "SELECT * FROM macs_personal_comisiones WHERE personal_situacion = 1 ORDER BY personal_nom1 ASC";
             $data = self::fetchArray($sql);
 
             http_response_code(200);
             echo json_encode([
                 'codigo' => 1,
-                'mensaje' => 'Asignaciones obtenidas correctamente',
+                'mensaje' => 'Personal obtenido correctamente',
                 'data' => $data
             ]);
 
@@ -164,7 +200,7 @@ class ComisionPersonalController extends ActiveRecord
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
-                'mensaje' => 'Error al obtener las asignaciones',
+                'mensaje' => 'Error al obtener el personal',
                 'detalle' => $e->getMessage(),
             ]);
         }
@@ -174,91 +210,161 @@ class ComisionPersonalController extends ActiveRecord
     {
         getHeadersApi();
 
-        $id = $_POST['comision_personal_id'];
-        
-        $_POST['comision_id'] = filter_var($_POST['comision_id'], FILTER_SANITIZE_NUMBER_INT);
-        
-        if ($_POST['comision_id'] <= 0) {
+        $id = $_POST['personal_id'];
+        $_POST['personal_nom1'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_nom1']))));
+
+        $cantidad_nombre = strlen($_POST['personal_nom1']);
+
+        if ($cantidad_nombre < 2) {
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
-                'mensaje' => 'Debe seleccionar una comisión válida'
+                'mensaje' => 'Primer nombre debe de tener mas de 1 caracteres'
             ]);
             return;
         }
 
-        $_POST['usuario_id'] = filter_var($_POST['usuario_id'], FILTER_SANITIZE_NUMBER_INT);
-        
-        if ($_POST['usuario_id'] <= 0) {
+        $_POST['personal_nom2'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_nom2']))));
+
+        $cantidad_nombre = strlen($_POST['personal_nom2']);
+
+        if ($cantidad_nombre < 2) {
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
-                'mensaje' => 'Debe seleccionar un usuario válido'
+                'mensaje' => 'Segundo nombre debe de tener mas de 1 caracteres'
             ]);
             return;
         }
 
-        $_POST['comision_personal_usuario_asigno'] = filter_var($_POST['comision_personal_usuario_asigno'], FILTER_SANITIZE_NUMBER_INT);
-        
-        if ($_POST['comision_personal_usuario_asigno'] <= 0) {
+        $_POST['personal_ape1'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_ape1']))));
+        $cantidad_apellido = strlen($_POST['personal_ape1']);
+
+        if ($cantidad_apellido < 2) {
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
-                'mensaje' => 'Debe especificar quién asigna al personal'
+                'mensaje' => 'Primer apellido debe de tener mas de 1 caracteres'
+            ]);
+            return;
+        }
+
+        $_POST['personal_ape2'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_ape2']))));
+        $cantidad_apellido = strlen($_POST['personal_ape2']);
+
+        if ($cantidad_apellido < 2) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'Segundo apellido debe de tener mas de 1 caracteres'
+            ]);
+            return;
+        }
+
+        $_POST['personal_tel'] = filter_var($_POST['personal_tel'], FILTER_SANITIZE_NUMBER_INT);
+
+        if (strlen($_POST['personal_tel']) != 8) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'El telefono debe de tener 8 numeros'
+            ]);
+            return;
+        }
+
+        $_POST['personal_dpi'] = trim(htmlspecialchars($_POST['personal_dpi']));
+
+        if (strlen($_POST['personal_dpi']) != 13) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'La cantidad de digitos del DPI debe de ser igual a 13'
+            ]);
+            return;
+        }
+
+        $_POST['personal_correo'] = filter_var($_POST['personal_correo'], FILTER_SANITIZE_EMAIL);
+
+        if (!filter_var($_POST['personal_correo'], FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'El correo electronico no es valido'
+            ]);
+            return;
+        }
+
+        $_POST['personal_direccion'] = ucwords(strtolower(trim(htmlspecialchars($_POST['personal_direccion']))));
+        $_POST['personal_rango'] = strtoupper(trim(htmlspecialchars($_POST['personal_rango'])));
+        
+        if (!in_array($_POST['personal_rango'], ['OFICIAL', 'ESPECIALISTA', 'TROPA', 'PLANILLERO'])) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'El rango debe ser OFICIAL, ESPECIALISTA, TROPA o PLANILLERO'
+            ]);
+            return;
+        }
+        
+        $_POST['personal_unidad'] = strtoupper(trim(htmlspecialchars($_POST['personal_unidad'])));
+        
+        if (!in_array($_POST['personal_unidad'], ['BRIGADA DE COMUNICACIONES', 'INFORMATICA'])) {
+            http_response_code(400);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'La unidad debe ser BRIGADA DE COMUNICACIONES o INFORMATICA'
             ]);
             return;
         }
 
         try {
-            $verificarComisionActiva = self::fetchArray("SELECT c.comision_id FROM macs_comision c 
-                                                       INNER JOIN macs_comision_personal cp ON c.comision_id = cp.comision_id 
-                                                       WHERE cp.usuario_id = {$_POST['usuario_id']} 
-                                                       AND c.comision_estado IN ('PROGRAMADA', 'EN_CURSO') 
-                                                       AND cp.comision_personal_situacion = 1 
-                                                       AND c.comision_situacion = 1
-                                                       AND cp.comision_personal_id != {$id}");
+            $verificarDpiExistente = self::fetchArray("SELECT personal_id FROM macs_personal_comisiones WHERE personal_dpi = '{$_POST['personal_dpi']}' AND personal_situacion = 1 AND personal_id != {$id}");
 
-            if (count($verificarComisionActiva) > 0) {
+            if (count($verificarDpiExistente) > 0) {
                 http_response_code(400);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Este usuario ya tiene una comisión activa asignada'
+                    'mensaje' => 'Ya existe otro personal registrado con este DPI'
                 ]);
                 return;
             }
 
-            $verificarDuplicado = self::fetchArray("SELECT comision_personal_id FROM macs_comision_personal 
-                                                   WHERE comision_id = {$_POST['comision_id']} 
-                                                   AND usuario_id = {$_POST['usuario_id']} 
-                                                   AND comision_personal_situacion = 1 
-                                                   AND comision_personal_id != {$id}");
+            $verificarCorreoExistente = self::fetchArray("SELECT personal_id FROM macs_personal_comisiones WHERE personal_correo = '{$_POST['personal_correo']}' AND personal_situacion = 1 AND personal_id != {$id}");
 
-            if (count($verificarDuplicado) > 0) {
+            if (count($verificarCorreoExistente) > 0) {
                 http_response_code(400);
                 echo json_encode([
                     'codigo' => 0,
-                    'mensaje' => 'Este usuario ya está asignado a esta comisión'
+                    'mensaje' => 'Ya existe otro personal registrado con este correo electrónico'
                 ]);
                 return;
             }
 
-            $_POST['comision_personal_observaciones'] = trim(htmlspecialchars($_POST['comision_personal_observaciones']));
+            $sql = "UPDATE macs_personal_comisiones SET 
+                    personal_nom1 = '{$_POST['personal_nom1']}',
+                    personal_nom2 = '{$_POST['personal_nom2']}',
+                    personal_ape1 = '{$_POST['personal_ape1']}',
+                    personal_ape2 = '{$_POST['personal_ape2']}',
+                    personal_tel = '{$_POST['personal_tel']}',
+                    personal_dpi = '{$_POST['personal_dpi']}',
+                    personal_correo = '{$_POST['personal_correo']}',
+                    personal_direccion = '{$_POST['personal_direccion']}',
+                    personal_rango = '{$_POST['personal_rango']}',
+                    personal_unidad = '{$_POST['personal_unidad']}'
+                    WHERE personal_id = {$id}";
+            
+            $resultado = self::SQL($sql);
 
-            $data = ComisionPersonal::find($id);
-            $data->sincronizar([
-                'comision_id' => $_POST['comision_id'],
-                'usuario_id' => $_POST['usuario_id'],
-                'comision_personal_usuario_asigno' => $_POST['comision_personal_usuario_asigno'],
-                'comision_personal_observaciones' => $_POST['comision_personal_observaciones'],
-                'comision_personal_situacion' => 1
-            ]);
-            $data->actualizar();
+            $nombre_completo = $_POST['personal_nom1'] . ' ' . $_POST['personal_ape1'];
+            
+            HistorialActController::registrarActividad('COMISION_PERSONAL', 'ACTUALIZAR', 'Modificó personal: ' . $nombre_completo, 'comisionpersonal/modificar');
 
             http_response_code(200);
             echo json_encode([
                 'codigo' => 1,
-                'mensaje' => 'La asignación ha sido modificada exitosamente'
+                'mensaje' => 'La información del personal ha sido modificada exitosamente'
             ]);
+            
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode([
@@ -273,104 +379,28 @@ class ComisionPersonalController extends ActiveRecord
     {
         try {
             $id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
+            
+            $sql_personal = "SELECT personal_nom1, personal_ape1 FROM macs_personal_comisiones WHERE personal_id = $id";
+            $personal_data = self::fetchFirst($sql_personal);
+            
             $ejecutar = ComisionPersonal::EliminarComisionPersonal($id);
+
+            if ($personal_data) {
+                $nombre_completo = $personal_data['personal_nom1'] . ' ' . $personal_data['personal_ape1'];
+                
+                HistorialActController::registrarActividad('COMISION_PERSONAL', 'ELIMINAR', 'Eliminó personal: ' . $nombre_completo, 'comisionpersonal/eliminar');
+            }
 
             http_response_code(200);
             echo json_encode([
                 'codigo' => 1,
-                'mensaje' => 'La asignación ha sido eliminada correctamente'
+                'mensaje' => 'El registro ha sido eliminado correctamente'
             ]);
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
                 'mensaje' => 'Error al Eliminar',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarComisionesAPI()
-    {
-        try {
-            $sql = "SELECT comision_id, comision_titulo, comision_tipo, comision_estado 
-                    FROM macs_comision 
-                    WHERE comision_situacion = 1 
-                    ORDER BY comision_titulo";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Comisiones obtenidas correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener las comisiones',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarUsuariosAPI()
-    {
-        try {
-            $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1 
-                    FROM macs_usuario 
-                    WHERE usuario_situacion = 1 
-                    ORDER BY usuario_nom1";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Usuarios obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los usuarios',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarUsuariosDisponiblesAPI()
-    {
-        try {
-            $sql = "SELECT u.usuario_id, u.usuario_nom1, u.usuario_ape1 
-                    FROM macs_usuario u 
-                    WHERE u.usuario_situacion = 1 
-                    AND u.usuario_id NOT IN (
-                        SELECT cp.usuario_id 
-                        FROM macs_comision_personal cp 
-                        INNER JOIN macs_comision c ON cp.comision_id = c.comision_id 
-                        WHERE c.comision_estado IN ('PROGRAMADA', 'EN_CURSO') 
-                        AND cp.comision_personal_situacion = 1 
-                        AND c.comision_situacion = 1
-                    )
-                    ORDER BY u.usuario_nom1";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Usuarios disponibles obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los usuarios disponibles',
                 'detalle' => $e->getMessage(),
             ]);
         }
